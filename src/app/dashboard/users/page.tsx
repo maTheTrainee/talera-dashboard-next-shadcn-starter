@@ -1,12 +1,11 @@
 import PageContainer from '@/components/layout/page-container';
-import UserListingPage from '@/features/users/components/user-listing';
+import LeadsListingPage from '@/features/users/components/user-listing';
 import { searchParamsCache } from '@/lib/searchparams';
 import type { SearchParams } from 'nuqs/server';
 import { usersInfoContent } from '@/features/users/info-content';
-import { UserFormSheetTrigger } from '@/features/users/components/user-form-sheet';
 
 export const metadata = {
-  title: 'Dashboard: Users'
+  title: 'Dashboard: Mottagare & Prospekt'
 };
 
 type PageProps = {
@@ -19,12 +18,11 @@ export default async function UsersPage(props: PageProps) {
 
   return (
     <PageContainer
-      pageTitle='Users'
-      pageDescription='Manage users (React Query + nuqs table pattern.)'
+      pageTitle='Mottagare & Prospekt'
+      pageDescription='Hantera och övervaka alla prospekt och samtal'
       infoContent={usersInfoContent}
-      pageHeaderAction={<UserFormSheetTrigger />}
     >
-      <UserListingPage />
+      <LeadsListingPage />
     </PageContainer>
   );
 }

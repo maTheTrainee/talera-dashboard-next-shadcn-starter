@@ -1,28 +1,36 @@
-export type { User } from '@/constants/mock-api-users';
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'booked' | 'closed' | 'lost';
 
-export type UserFilters = {
-  page?: number;
-  limit?: number;
-  roles?: string;
-  search?: string;
-  sort?: string;
+export type Lead = {
+  id: string;
+  phoneNumber: string;
+  customerName: string;
+  status: LeadStatus;
+  duration: number; // seconds
+  aiSummary: string;
+  campaignType: 'outbound' | 'inbound';
+  createdAt: string;
+  updatedAt: string;
+  organizationId: string;
 };
 
-export type UsersResponse = {
+export type CreateLeadData = Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>;
+
+export type LeadFilters = {
+  page?: number;
+  limit?: number;
+  status?: LeadStatus;
+  campaignType?: 'outbound' | 'inbound';
+  search?: string;
+  sort?: string;
+  organizationId?: string; // 🔒 SECURE: Organization filter
+};
+
+export type LeadsResponse = {
   success: boolean;
   time: string;
   message: string;
-  total_users: number;
+  total_leads: number;
   offset: number;
   limit: number;
-  users: import('@/constants/mock-api-users').User[];
-};
-
-export type UserMutationPayload = {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  role: string;
-  status: string;
+  leads: Lead[];
 };

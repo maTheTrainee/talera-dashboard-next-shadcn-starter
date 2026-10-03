@@ -1,129 +1,59 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { useReducedMotion } from 'motion/react';
-import { useChatStore } from '../utils/store';
-import type { Attachment, Message } from '../utils/types';
-import { ConversationList } from './conversation-list';
-import { ConversationSelect } from './conversation-select';
-import { ChatArea } from './chat-area';
+import { useCallback, useState } from 'react';
+import { useTranscriptStore } from '../utils/store';
+import type { CallTranscript } from '../utils/types';
+import { TranscriptList } from './transcript-list';
+import { TranscriptView } from './transcript-view';
 
-export function Messenger() {
-  const {
-    conversations,
-    selectedConversationId,
-    draft,
-    replyCursor,
-    selectConversation,
-    setDraft,
-    sendMessage,
-    addIncomingMessage,
-    advanceReplyCursor,
-    getActiveConversation
-  } = useChatStore();
+export function TranscriptPanel() {
+  const { transcripts, selectedTranscriptId, selectTranscript, getActiveTranscript } =
+    useTranscriptStore();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const shouldReduceMotion = useReducedMotion();
-  const replyTimeoutRef = useRef<number | null>(null);
-  const selectedRef = useRef(selectedConversationId);
-
-  useEffect(() => {
-    selectedRef.current = selectedConversationId;
-    setAttachments([]);
-  }, [selectedConversationId]);
-
-  useEffect(() => {
-    return () => {
-      if (replyTimeoutRef.current) {
-        window.clearTimeout(replyTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleAddAttachments = useCallback((files: FileList) => {
-    const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-      id: 'file-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-      name: file.name,
-      size: file.size,
-      type: file.type
-    }));
-    setAttachments((prev) => [...prev, ...newAttachments]);
-  }, []);
-
-  const handleRemoveAttachment = useCallback((id: string) => {
-    setAttachments((prev) => prev.filter((a) => a.id !== id));
-  }, []);
-
-  const handleSubmit = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      const active = getActiveConversation();
-      if ((!draft.trim() && attachments.length === 0) || !active) return;
-
-      const conversationId = active.id;
-      sendMessage(draft, attachments.length > 0 ? attachments : undefined);
-      setAttachments([]);
-
-      const autoReplies = active.autoReplies;
-      if (!autoReplies.length) return;
-
-      const cursor = replyCursor[conversationId] ?? 0;
-      const nextReply = autoReplies[cursor % autoReplies.length];
-      const delay = shouldReduceMotion ? 0 : 900;
-
-      replyTimeoutRef.current = window.setTimeout(() => {
-        const timestamp = new Date().toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-        const incoming: Message = {
-          id: 'incoming-' + Date.now().toString(),
-          sender: 'contact',
-          author: active.name,
-          text: nextReply,
-          timestamp
-        };
-
-        addIncomingMessage(conversationId, incoming);
-        advanceReplyCursor(conversationId);
-      }, delay);
-    },
-    [
-      draft,
-      attachments,
-      replyCursor,
-      shouldReduceMotion,
-      getActiveConversation,
-      sendMessage,
-      addIncomingMessage,
-      advanceReplyCursor
-    ]
+  const filteredTranscripts = transcripts.filter(
+    (t) =>
+      t.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.phoneNumber.includes(searchQuery)
   );
 
-  const activeConversation = getActiveConversation();
-  if (!activeConversation) return null;
+  const activeTranscript = getActiveTranscript();
 
   return (
     <div className='border-border/50 bg-background/70 relative grid h-[calc(100dvh-5.5rem)] w-full grid-rows-[auto,1fr] gap-3 overflow-hidden rounded-2xl border p-3 backdrop-blur-xl sm:gap-4 sm:p-4 lg:[grid-template-columns:30%_1fr] lg:grid-rows-[1fr] lg:gap-4 lg:rounded-3xl lg:p-5'>
-      <ConversationSelect
-        conversations={conversations}
-        selectedId={selectedConversationId}
-        onSelect={selectConversation}
-      />
-      <ConversationList
-        conversations={conversations}
-        selectedId={selectedConversationId}
-        onSelect={selectConversation}
-      />
-      <ChatArea
-        conversation={activeConversation}
-        draft={draft}
-        onDraftChange={setDraft}
-        onSubmit={handleSubmit}
-        attachments={attachments}
-        onAddAttachments={handleAddAttachments}
-        onRemoveAttachment={handleRemoveAttachment}
-      />
+      <div className='flex flex-col gap-3'>
+        <div className='relative'>
+          <input
+            type='text'
+            placeholder='Sök transkriptioner...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='w-full px-3 py-2 pl-10 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring'
+          />
+          <span className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground'>
+            <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+              />
+            </svg>
+          </span>
+        </div>
+        <TranscriptList
+          transcripts={filteredTranscripts}
+          selectedId={selectedTranscriptId}
+          onSelect={selectTranscript}
+        />
+      </div>
+      {activeTranscript ? (
+        <TranscriptView transcript={activeTranscript} />
+      ) : (
+        <div className='flex items-center justify-center h-full text-muted-foreground'>
+          Välj ett samtal för att visa transkription
+        </div>
+      )}
     </div>
   );
 }

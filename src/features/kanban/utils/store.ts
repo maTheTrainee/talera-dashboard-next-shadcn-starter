@@ -1,130 +1,186 @@
 import { create } from 'zustand';
-import { v4 as uuid } from 'uuid';
-// import { persist } from 'zustand/middleware';
 
-export type Priority = 'low' | 'medium' | 'high';
+export type CallStatus = 'pending' | 'ringing' | 'connected' | 'completed';
 
-export type Task = {
+export type CallRecord = {
   id: string;
-  title: string;
-  priority: Priority;
-  description?: string;
-  assignee?: string;
-  dueDate?: string;
+  phoneNumber: string;
+  customerName: string;
+  status: CallStatus;
+  campaignType: 'outbound' | 'inbound';
+  duration?: string; // MM:SS format
+  outcome?: 'booked' | 'answered' | 'missed' | 'resolved' | 'voicemail' | 'busy';
+  startedAt: string;
+  updatedAt: string;
 };
 
-type KanbanState = {
-  columns: Record<string, Task[]>;
-  setColumns: (columns: Record<string, Task[]>) => void;
-  addTask: (title: string, description?: string) => void;
-};
+const COLUMN_IDS: CallStatus[] = ['pending', 'ringing', 'connected', 'completed'];
 
-const initialColumns: Record<string, Task[]> = {
-  backlog: [
+const initialColumns: Record<CallStatus, CallRecord[]> = {
+  pending: [
     {
       id: '1',
-      title: 'Migrate to Stripe billing API',
-      priority: 'high',
-      assignee: 'Sarah Chen',
-      dueDate: '2026-04-08'
+      phoneNumber: '+46 70 123 45 67',
+      customerName: 'Erik Andersson',
+      status: 'pending',
+      campaignType: 'outbound',
+      startedAt: '2026-10-03T10:00:00Z',
+      updatedAt: '2026-10-03T10:00:00Z'
     },
     {
       id: '2',
-      title: 'Add CSV export to reports',
-      priority: 'medium',
-      assignee: 'Marcus Rivera',
-      dueDate: '2026-04-12'
+      phoneNumber: '+46 73 987 65 43',
+      customerName: 'Anna Johansson',
+      status: 'pending',
+      campaignType: 'outbound',
+      startedAt: '2026-10-03T10:05:00Z',
+      updatedAt: '2026-10-03T10:05:00Z'
     },
     {
       id: '3',
-      title: 'Update onboarding flow copy',
-      priority: 'low',
-      assignee: 'Priya Sharma',
-      dueDate: '2026-04-15'
-    },
-    {
-      id: '9',
-      title: 'Audit RBAC permissions',
-      priority: 'medium',
-      assignee: 'Jordan Kim',
-      dueDate: '2026-04-10'
+      phoneNumber: '+46 76 555 12 34',
+      customerName: 'Lars Nilsson',
+      status: 'pending',
+      campaignType: 'outbound',
+      startedAt: '2026-10-03T10:10:00Z',
+      updatedAt: '2026-10-03T10:10:00Z'
     }
   ],
-  inProgress: [
+  ringing: [
     {
       id: '4',
-      title: 'Refactor notification service',
-      priority: 'high',
-      assignee: 'Alex Turner',
-      dueDate: '2026-04-03'
+      phoneNumber: '+46 70 222 33 44',
+      customerName: 'Maria Svensson',
+      status: 'ringing',
+      campaignType: 'outbound',
+      startedAt: '2026-10-03T10:15:00Z',
+      updatedAt: '2026-10-03T10:15:00Z'
     },
     {
       id: '5',
-      title: 'Build team invitation flow',
-      priority: 'medium',
-      assignee: 'Emily Nakamura',
-      dueDate: '2026-04-06'
-    },
-    {
-      id: '10',
-      title: 'Fix timezone handling in scheduler',
-      priority: 'high',
-      assignee: 'Sarah Chen',
-      dueDate: '2026-04-04'
+      phoneNumber: '+46 72 444 55 66',
+      customerName: 'Johan Karlsson',
+      status: 'ringing',
+      campaignType: 'outbound',
+      startedAt: '2026-10-03T10:16:00Z',
+      updatedAt: '2026-10-03T10:16:00Z'
     }
   ],
-  done: [
+  connected: [
     {
       id: '6',
-      title: 'SSO integration with Okta',
-      priority: 'high',
-      assignee: 'Jordan Kim',
-      dueDate: '2026-03-22'
+      phoneNumber: '+46 73 777 88 99',
+      customerName: 'Sofia Lindberg',
+      status: 'connected',
+      campaignType: 'outbound',
+      duration: '03:45',
+      startedAt: '2026-10-03T09:50:00Z',
+      updatedAt: '2026-10-03T09:53:45Z'
     },
     {
       id: '7',
-      title: 'Dashboard analytics charts',
-      priority: 'medium',
-      assignee: 'Marcus Rivera',
-      dueDate: '2026-03-20'
-    },
+      phoneNumber: '+46 8 123 45 67',
+      customerName: 'Kundtjänst AB',
+      status: 'connected',
+      campaignType: 'inbound',
+      duration: '05:22',
+      startedAt: '2026-10-03T09:30:00Z',
+      updatedAt: '2026-10-03T09:35:22Z'
+    }
+  ],
+  completed: [
     {
       id: '8',
-      title: 'Webhook retry mechanism',
-      priority: 'low',
-      assignee: 'Alex Turner',
-      dueDate: '2026-03-18'
+      phoneNumber: '+46 31 987 65 43',
+      customerName: 'Support Center',
+      status: 'completed',
+      campaignType: 'inbound',
+      duration: '06:45',
+      outcome: 'resolved',
+      startedAt: '2026-10-03T09:00:00Z',
+      updatedAt: '2026-10-03T09:06:45Z'
+    },
+    {
+      id: '9',
+      phoneNumber: '+46 40 555 12 34',
+      customerName: 'Helpdesk Sverige',
+      status: 'completed',
+      campaignType: 'inbound',
+      duration: '03:22',
+      outcome: 'resolved',
+      startedAt: '2026-10-03T08:45:00Z',
+      updatedAt: '2026-10-03T08:48:22Z'
+    },
+    {
+      id: '10',
+      phoneNumber: '+46 8 222 33 44',
+      customerName: 'Service Partner',
+      status: 'completed',
+      campaignType: 'inbound',
+      duration: '02:10',
+      outcome: 'resolved',
+      startedAt: '2026-10-03T08:30:00Z',
+      updatedAt: '2026-10-03T08:32:10Z'
     }
   ]
 };
 
-export const useTaskStore = create<KanbanState>()(
-  // To enable persistence across refreshes, uncomment the persist wrapper below:
-  // persist(
-  (set) => ({
-    columns: initialColumns,
+type CallStoreState = {
+  columns: Record<CallStatus, CallRecord[]>;
+  setColumns: (columns: Record<CallStatus, CallRecord[]>) => void;
+  updateCallStatus: (callId: string, newStatus: CallStatus) => void;
+  addCall: (call: Omit<CallRecord, 'id'>) => void;
+};
 
-    setColumns: (columns) => set({ columns }),
+export const useCallStore = create<CallStoreState>()((set) => ({
+  columns: initialColumns,
 
-    addTask: (title, description) =>
-      set((state) => ({
+  setColumns: (columns) => set({ columns }),
+
+  updateCallStatus: (callId, newStatus) =>
+    set((state) => {
+      // Find and remove call from current column
+      let callToMove: CallRecord | undefined;
+      const newColumns: Record<CallStatus, CallRecord[]> = {
+        pending: [...state.columns.pending],
+        ringing: [...state.columns.ringing],
+        connected: [...state.columns.connected],
+        completed: [...state.columns.completed]
+      };
+
+      for (const status of COLUMN_IDS) {
+        const index = newColumns[status].findIndex((c) => c.id === callId);
+        if (index !== -1) {
+          callToMove = newColumns[status].splice(index, 1)[0];
+          break;
+        }
+      }
+
+      if (callToMove) {
+        const updatedCall = {
+          ...callToMove,
+          status: newStatus,
+          updatedAt: new Date().toISOString()
+        };
+        newColumns[newStatus] = [updatedCall, ...newColumns[newStatus]];
+      }
+
+      return { columns: newColumns };
+    }),
+
+  addCall: (call) =>
+    set((state) => {
+      const newCall: CallRecord = {
+        ...call,
+        id: `call-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        startedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      return {
         columns: {
           ...state.columns,
-          backlog: [
-            {
-              id: uuid(),
-              title,
-              description,
-              priority: 'medium' as Priority,
-              assignee: undefined,
-              dueDate: undefined
-            },
-            ...(state.columns.backlog ?? [])
-          ]
+          pending: [newCall, ...state.columns.pending]
         }
-      }))
-  })
-  //   ,
-  //   { name: 'kanban-store' }
-  // )
-);
+      };
+    })
+}));

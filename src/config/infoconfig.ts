@@ -104,63 +104,63 @@ export const teamInfoContent: InfobarContent = {
 };
 
 export const billingInfoContent: InfobarContent = {
-  title: 'Billing & Plans',
+  title: 'Fakturering & Saldo',
   sections: [
     {
-      title: 'Overview',
+      title: 'Översikt',
       description:
-        "The Billing page allows you to manage your organization's subscription and usage limits. Plans and subscriptions are managed through Clerk Billing for B2B, which provides organization-level subscription management with integrated Stripe payment processing.",
+        'Här hanterar du din organisations prenumeration och minuttessaldo för Voice AI-samtal. Prenumerationer hanteras via Clerk Billing med integrerad Stripe-betalning. Ditt saldo uppdateras i realtid när samtal genomförs via n8n-backend.',
       links: [
         {
-          title: 'Clerk Billing Documentation',
+          title: 'Clerk Billing Dokumentation',
           url: 'https://clerk.com/docs/billing/overview'
         }
       ]
     },
     {
-      title: 'Available Plans',
+      title: 'Tillgängliga Planer',
       description:
-        'View and subscribe to available plans through the pricing table. Plans are created and managed in the Clerk Dashboard. Toggle "Publicly available" on plans to show them in the pricing table. Common plans include free, pro, and team tiers.',
+        'Välj en plan som passar era behov. Planer skapas och hanteras i Clerk Dashboard. Aktivera "Publicly available" för att visa dem i pristabellen. Vanliga nivåer: Gratis, Pro, Enterprise.',
       links: [
         {
-          title: 'Clerk Dashboard - Plans',
+          title: 'Clerk Dashboard - Planer',
           url: 'https://dashboard.clerk.com/~/billing/plans'
         }
       ]
     },
     {
-      title: 'Plan Features',
+      title: 'Plan-funktioner',
       description:
-        'Each plan can include specific features that unlock functionality in the application. Features are added to plans in the Clerk Dashboard and can be checked in code using the `has()` function with `feature` checks.',
+        'Varje plan kan innehålla specifika funktioner som låser upp funktionalitet i appen. Funktioner läggs till i planer i Clerk Dashboard och kan kontrolleras med `has()` med `feature`-checks.',
       links: []
     },
     {
-      title: 'Access Control',
+      title: 'Minuttessaldo',
       description:
-        'Plans and features are used for access control throughout the application. Server-side checks use the `has()` function to verify plan or feature access. Client-side protection uses the `<Show>` component to conditionally render content based on subscription status.',
+        'För utgående kampanjer dras minuter från ert saldo per genomfört samtal. Saldo syns i realtid på Översikt-sidan. Inkommande samtal (Support AI) räknas separat och påverkar inte utgående saldo.',
       links: []
     },
     {
-      title: 'Billing Cost Structure',
+      title: 'Kostnadsstruktur',
       description:
-        "Clerk Billing costs 0.7% per transaction, plus transaction fees paid directly to Stripe. Clerk Billing is not the same as Stripe Billing - plans and pricing are managed through the Clerk Dashboard and won't sync with existing Stripe products. Clerk uses Stripe only for payment processing.",
+        'Clerk Billing tar 0,7% per transaktion plus Stripe-avgifter. Clerk Billing är inte samma sak som Stripe Billing - planer och priser hanteras i Clerk Dashboard och synkas inte med befintliga Stripe-produkter.',
       links: []
     },
     {
-      title: 'Setup Requirements',
+      title: 'Krav för Aktivering',
       description:
-        "To enable billing, navigate to Billing Settings in the Clerk Dashboard and enable billing for your application. Choose between Clerk's development gateway (for testing) or your own Stripe account (for production). Note: A Stripe account created for development cannot be used for production.",
+        'Gå till Billing Settings i Clerk Dashboard och aktivera fakturering. Välj mellan Clerks utvecklings-gateway (test) eller ert eget Stripe-konto (produktion). Obs: Ett Stripe-konto för utveckling kan inte användas för produktion.',
       links: [
         {
-          title: 'Billing Settings',
+          title: 'Faktureringsinställningar',
           url: 'https://dashboard.clerk.com/~/billing/settings'
         }
       ]
     },
     {
-      title: 'Beta Status',
+      title: 'Beta-status',
       description:
-        'Billing is currently in Beta and its APIs are experimental and may undergo breaking changes. To mitigate potential disruptions, we recommend pinning your SDK and `clerk-js` package versions.',
+        'Fakturering är i Beta och API:er kan genomgå brytande förändringar. Vi rekommenderar att ni pinnar SDK- och `clerk-js`-versioner.',
       links: []
     }
   ]

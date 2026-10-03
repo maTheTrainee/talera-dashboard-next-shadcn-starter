@@ -6,41 +6,43 @@ import { useDataTable } from '@/hooks/use-data-table';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { getSortingStateParser } from '@/lib/parsers';
-import { usersQueryOptions } from '../../api/queries';
-import { columns } from './columns';
+import { leadsQueryOptions } from '../../api/queries';
+import { leadColumns } from './columns';
+import type { LeadFilters, LeadStatus } from '../../api/types';
 
-const columnIds = columns.map((c) => c.id).filter(Boolean) as string[];
+export function LeadsTable() {
+  const columnIds = leadColumns()
+    .map((c) => c.id)
+    .filter(Boolean) as string[];
 
-export function UsersTable() {
   const [params] = useQueryStates({
     page: parseAsInteger.withDefault(1),
     perPage: parseAsInteger.withDefault(10),
     name: parseAsString,
-    role: parseAsString,
+    status: parseAsString,
+    campaignType: parseAsString,
     sort: getSortingStateParser(columnIds).withDefault([])
   });
 
-  const filters = {
+  const filters: LeadFilters = {
     page: params.page,
     limit: params.perPage,
     ...(params.name && { search: params.name }),
-    ...(params.role && { roles: params.role }),
+    ...(params.status && { status: params.status as LeadStatus }),
+    ...(params.campaignType && { campaignType: params.campaignType as 'outbound' | 'inbound' }),
     ...(params.sort.length > 0 && { sort: JSON.stringify(params.sort) })
   };
 
-  const { data } = useSuspenseQuery(usersQueryOptions(filters));
+  const { data } = useSuspenseQuery(leadsQueryOptions(filters));
 
-  const pageCount = Math.ceil(data.total_users / params.perPage);
+  const pageCount = Math.ceil(data.total_leads / params.perPage);
 
   const { table } = useDataTable({
-    data: data.users,
-    columns,
+    data: data.leads,
+    columns: leadColumns(),
     pageCount,
     shallow: true,
-    debounceMs: 500,
-    initialState: {
-      columnPinning: { right: ['actions'] }
-    }
+    debounceMs: 500
   });
 
   return (
@@ -50,7 +52,7 @@ export function UsersTable() {
   );
 }
 
-export function UsersTableSkeleton() {
+export function LeadsTableSkeleton() {
   return (
     <div className='flex flex-1 animate-pulse flex-col gap-4'>
       <div className='bg-muted h-10 w-full rounded' />

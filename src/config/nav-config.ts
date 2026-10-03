@@ -32,28 +32,76 @@ import { NavGroup } from '@/types';
  *
  * Note: The `visible` function is deprecated but still supported for backward compatibility.
  * Use the `access` property for new items.
+ *
+ * Navigation labels use i18n translation keys - actual translations are in src/lib/i18n.tsx
  */
 export const navGroups: NavGroup[] = [
   {
-    label: 'Overview',
+    label: 'nav.voice-ai',
     items: [
       {
-        title: 'Dashboard',
+        title: 'nav.overview',
         url: '/dashboard/overview',
         icon: 'dashboard',
         isActive: false,
-        shortcut: ['d', 'd'],
+        shortcut: ['o', 'o'],
         items: []
       },
       {
-        title: 'Workspaces',
+        title: 'nav.start-campaign',
+        url: '/dashboard/product',
+        icon: 'phone',
+        shortcut: ['k', 'k'],
+        isActive: false,
+        items: []
+      },
+      {
+        title: 'nav.recipients-prospects',
+        url: '/dashboard/users',
+        icon: 'teams',
+        shortcut: ['m', 'p'],
+        isActive: false,
+        items: []
+      },
+      {
+        title: 'nav.realtime-view',
+        url: '/dashboard/kanban',
+        icon: 'kanban',
+        shortcut: ['r', 'v'],
+        isActive: false,
+        items: []
+      },
+      {
+        title: 'nav.call-transcripts',
+        url: '/dashboard/chat',
+        icon: 'chat',
+        shortcut: ['s', 't'],
+        isActive: false,
+        items: []
+      },
+      {
+        title: 'nav.billing-balance',
+        url: '/dashboard/billing',
+        icon: 'billing',
+        shortcut: ['f', 's'],
+        isActive: false,
+        items: [],
+        access: { requireOrg: true }
+      }
+    ]
+  },
+  {
+    label: 'nav.settings',
+    items: [
+      {
+        title: 'nav.workspaces',
         url: '/dashboard/workspaces',
         icon: 'workspace',
         isActive: false,
         items: []
       },
       {
-        title: 'Teams',
+        title: 'nav.team',
         url: '/dashboard/workspaces/team',
         icon: 'teams',
         isActive: false,
@@ -61,144 +109,18 @@ export const navGroups: NavGroup[] = [
         access: { requireOrg: true }
       },
       {
-        title: 'Product',
-        url: '/dashboard/product',
-        icon: 'product',
+        title: 'nav.profile',
+        url: '/dashboard/profile',
+        icon: 'profile',
         shortcut: ['p', 'p'],
-        isActive: false,
         items: []
       },
       {
-        title: 'Users',
-        url: '/dashboard/users',
-        icon: 'teams',
-        shortcut: ['u', 'u'],
-        isActive: false,
+        title: 'nav.notifications',
+        url: '/dashboard/notifications',
+        icon: 'notification',
+        shortcut: ['n', 'n'],
         items: []
-      },
-      {
-        title: 'Kanban',
-        url: '/dashboard/kanban',
-        icon: 'kanban',
-        shortcut: ['k', 'k'],
-        isActive: false,
-        items: []
-      },
-      {
-        title: 'Chat',
-        url: '/dashboard/chat',
-        icon: 'chat',
-        shortcut: ['c', 'c'],
-        isActive: false,
-        items: []
-      },
-      {
-        title: 'AI Chat',
-        url: '/dashboard/ai-chat',
-        icon: 'sparkles',
-        shortcut: ['a', 'i'],
-        isActive: false,
-        items: []
-      }
-    ]
-  },
-  {
-    label: 'Elements',
-    items: [
-      {
-        title: 'Forms',
-        url: '#',
-        icon: 'forms',
-        isActive: true,
-        items: [
-          {
-            title: 'Basic Form',
-            url: '/dashboard/forms/basic',
-            icon: 'forms',
-            shortcut: ['f', 'f']
-          },
-          {
-            title: 'Multi-Step Form',
-            url: '/dashboard/forms/multi-step',
-            icon: 'forms'
-          },
-          {
-            title: 'Sheet & Dialog',
-            url: '/dashboard/forms/sheet-form',
-            icon: 'forms'
-          },
-          {
-            title: 'Advanced Patterns',
-            url: '/dashboard/forms/advanced',
-            icon: 'forms'
-          }
-        ]
-      },
-      {
-        title: 'React Query',
-        url: '/dashboard/react-query',
-        icon: 'code',
-        isActive: false,
-        items: []
-      },
-      {
-        title: 'Icons',
-        url: '/dashboard/elements/icons',
-        icon: 'palette',
-        isActive: false,
-        items: []
-      }
-    ]
-  },
-  {
-    label: '',
-    items: [
-      {
-        title: 'Pro',
-        url: '#',
-        icon: 'pro',
-        isActive: false,
-        items: [
-          {
-            title: 'Exclusive',
-            url: '/dashboard/exclusive',
-            icon: 'exclusive',
-            shortcut: ['e', 'e']
-          }
-        ]
-      },
-      {
-        title: 'Account',
-        url: '#',
-        icon: 'account',
-        isActive: true,
-        items: [
-          {
-            title: 'Profile',
-            url: '/dashboard/profile',
-            icon: 'profile',
-            shortcut: ['m', 'm']
-          },
-          {
-            title: 'Notifications',
-            url: '/dashboard/notifications',
-            icon: 'notification',
-            shortcut: ['n', 'n']
-          },
-          {
-            title: 'Billing',
-            url: '/dashboard/billing',
-            icon: 'billing',
-            shortcut: ['b', 'b'],
-            access: { requireOrg: true }
-          },
-          {
-            title: 'Login',
-            shortcut: ['l', 'l'],
-            url: '/',
-            icon: 'login'
-          }
-        ]
       }
     ]
   }

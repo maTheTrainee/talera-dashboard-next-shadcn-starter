@@ -34,6 +34,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
+import { useI18n } from '@/lib/i18n';
 
 export default function AppSidebar() {
   const pathname = usePathname();
@@ -42,6 +43,7 @@ export default function AppSidebar() {
   const { organization } = useOrganization();
   const { signOut } = useClerk();
   const router = useRouter();
+  const { t } = useI18n();
   const filteredGroups = useFilteredNavGroups(navGroups);
 
   React.useEffect(() => {
@@ -56,7 +58,7 @@ export default function AppSidebar() {
       <SidebarContent className='overflow-x-hidden'>
         {filteredGroups.map((group) => (
           <SidebarGroup key={group.label || 'ungrouped'} className='py-0'>
-            {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+            {group.label && <SidebarGroupLabel>{t(group.label)}</SidebarGroupLabel>}
             <SidebarMenu>
               {group.items.map((item) => {
                 const Icon = item.icon ? Icons[item.icon] : Icons.logo;
@@ -69,14 +71,14 @@ export default function AppSidebar() {
                     <CollapsibleTrigger
                       render={
                         <SidebarMenuButton
-                          tooltip={item.title}
+                          tooltip={t(item.title)}
                           isActive={pathname === item.url}
                           className='group/collapsible'
                         />
                       }
                     >
                       {item.icon && <Icon />}
-                      <span>{item.title}</span>
+                      <span>{t(item.title)}</span>
                       <Icons.chevronRight className='ml-auto transition-transform duration-200 group-data-panel-open/collapsible:rotate-90' />
                     </CollapsibleTrigger>
                     <CollapsibleContent>
@@ -84,10 +86,10 @@ export default function AppSidebar() {
                         {item.items?.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton
-                              render={<Link href={subItem.url} aria-label={subItem.title} />}
+                              render={<Link href={subItem.url} aria-label={t(subItem.title)} />}
                               isActive={pathname === subItem.url}
                             >
-                              <span>{subItem.title}</span>
+                              <span>{t(subItem.title)}</span>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}
@@ -97,12 +99,12 @@ export default function AppSidebar() {
                 ) : (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
-                      render={<Link href={item.url} aria-label={item.title} />}
-                      tooltip={item.title}
+                      render={<Link href={item.url} aria-label={t(item.title)} />}
+                      tooltip={t(item.title)}
                       isActive={pathname === item.url}
                     >
                       <Icon />
-                      <span>{item.title}</span>
+                      <span>{t(item.title)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -146,17 +148,17 @@ export default function AppSidebar() {
                 <DropdownMenuGroup>
                   <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
                     <Icons.account className='mr-2 h-4 w-4' />
-                    Profile
+                    {t('nav.profile')}
                   </DropdownMenuItem>
                   {organization && (
                     <DropdownMenuItem onClick={() => router.push('/dashboard/billing')}>
                       <Icons.creditCard className='mr-2 h-4 w-4' />
-                      Billing
+                      {t('nav.billing-balance')}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={() => router.push('/dashboard/notifications')}>
                     <Icons.notification className='mr-2 h-4 w-4' />
-                    Notifications
+                    {t('nav.notifications')}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

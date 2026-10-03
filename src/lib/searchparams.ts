@@ -12,7 +12,9 @@ export const searchParams = {
   gender: parseAsString,
   category: parseAsString,
   role: parseAsString,
-  sort: parseAsString
+  sort: parseAsString,
+  campaignType: parseAsString,
+  status: parseAsString
   // advanced filter
   // filters: getFiltersStateParser().withDefault([]),
   // joinOperator: parseAsStringEnum(['and', 'or']).withDefault('and')

@@ -8,6 +8,7 @@ import {
   IconBox,
   IconBrandGithub,
   IconBrandTwitter,
+  IconBrandZapier,
   IconBrightness,
   IconCalendar,
   IconCheck,
@@ -27,6 +28,7 @@ import {
   IconClock,
   IconCode,
   IconCommand,
+  IconCopy,
   IconCreditCard,
   IconDeviceLaptop,
   IconDots,
@@ -53,12 +55,15 @@ import {
   IconLogin,
   IconLogout,
   IconMessage,
+  IconMicrophone,
   IconMinus,
   IconMoon,
   IconMusic,
   IconPalette,
   IconPaperclip,
   IconPhone,
+  IconPhoneOutgoing,
+  IconPhoneIncoming,
   IconPhoto,
   IconPizza,
   IconPlus,
@@ -87,7 +92,8 @@ import {
   IconUsers,
   IconVideo,
   IconCrown,
-  IconX
+  IconX,
+  IconDownload
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -146,6 +152,8 @@ export const Icons = {
   chat: IconMessage,
   notification: IconBell,
   phone: IconPhone,
+  phoneOutgoing: IconPhoneOutgoing,
+  phoneIncoming: IconPhoneIncoming,
   video: IconVideo,
   send: IconSend,
   paperclip: IconPaperclip,
@@ -168,6 +176,10 @@ export const Icons = {
   login: IconLogin,
   logout: IconLogout,
   gripVertical: IconGripVertical,
+  zap: IconBrandZapier,
+  download: IconDownload,
+  copy: IconCopy,
+  mic: IconMicrophone,
 
   // Shapes / Indicators
   circle: IconCircle,

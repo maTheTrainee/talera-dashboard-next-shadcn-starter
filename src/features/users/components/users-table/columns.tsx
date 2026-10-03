@@ -1,72 +1,151 @@
 'use client';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
-import type { User } from '../../api/types';
+import type { Lead } from '../../api/types';
 import { Column, ColumnDef } from '@tanstack/react-table';
 import { Icons } from '@/components/icons';
-import { CellAction } from './cell-action';
-import { ROLE_OPTIONS } from './options';
+import { useI18n } from '@/lib/i18n';
 
-export const columns: ColumnDef<User>[] = [
-  {
-    id: 'name',
-    accessorFn: (row) => `${row.first_name} ${row.last_name}`,
-    header: ({ column }: { column: Column<User, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Name' />
-    ),
-    cell: ({ row }) => (
-      <div className='flex flex-col'>
-        <span className='font-medium'>
-          {row.original.first_name} {row.original.last_name}
-        </span>
-        <span className='text-muted-foreground text-xs'>{row.original.email}</span>
-      </div>
-    ),
-    meta: {
-      label: 'Name',
-      placeholder: 'Search users...',
-      variant: 'text' as const,
-      icon: Icons.text
-    },
-    enableColumnFilter: true
-  },
-  {
-    accessorKey: 'phone',
-    header: 'PHONE'
-  },
-  {
-    id: 'role',
-    accessorKey: 'role',
-    enableSorting: false,
-    header: ({ column }: { column: Column<User, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Role' />
-    ),
-    cell: ({ cell }) => {
-      return (
-        <Badge variant='outline' className='capitalize'>
-          {cell.getValue<User['role']>()}
-        </Badge>
-      );
-    },
-    enableColumnFilter: true,
-    meta: {
-      label: 'roles',
-      variant: 'multiSelect' as const,
-      options: ROLE_OPTIONS
-    }
-  },
-  {
-    accessorKey: 'status',
-    header: 'STATUS',
-    cell: ({ cell }) => {
-      const status = cell.getValue<User['status']>();
-      const variant =
-        status === 'Active' ? 'default' : status === 'Inactive' ? 'secondary' : 'outline';
-      return <Badge variant={variant}>{status}</Badge>;
-    }
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => <CellAction data={row.original} />
-  }
+const statusLabels: Record<
+  string,
+  { sv: string; en: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+> = {
+  new: { sv: 'Ny', en: 'New', variant: 'default' },
+  contacted: { sv: 'Kontaktad', en: 'Contacted', variant: 'secondary' },
+  qualified: { sv: 'Kvalificerad', en: 'Qualified', variant: 'default' },
+  booked: { sv: 'Bokat 🚀', en: 'Booked 🚀', variant: 'default' },
+  closed: { sv: 'Avslutad', en: 'Closed', variant: 'secondary' },
+  lost: { sv: 'Förlorad', en: 'Lost', variant: 'destructive' }
+};
+
+const statusOptions = [
+  { value: 'new', label: 'Ny' },
+  { value: 'contacted', label: 'Kontaktad' },
+  { value: 'qualified', label: 'Kvalificerad' },
+  { value: 'booked', label: 'Bokat' },
+  { value: 'closed', label: 'Avslutad' },
+  { value: 'lost', label: 'Förlorad' }
 ];
+
+const campaignTypeOptions = [
+  { value: 'outbound', label: 'Utgående' },
+  { value: 'inbound', label: 'Ingående' }
+];
+
+export const leadColumns = () => {
+  const { t } = useI18n();
+
+  return [
+    {
+      accessorKey: 'phoneNumber',
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title={t('leads.phone')} />
+      ),
+      cell: ({ cell }) => (
+        <div className='font-mono text-sm'>{cell.getValue<Lead['phoneNumber']>()}</div>
+      ),
+      meta: {
+        label: t('leads.phone'),
+        placeholder: t('leads.search'),
+        variant: 'text' as const,
+        icon: Icons.phone
+      },
+      enableColumnFilter: true
+    },
+    {
+      accessorKey: 'customerName',
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title={t('leads.name')} />
+      ),
+      cell: ({ cell }) => (
+        <div className='font-medium'>{cell.getValue<Lead['customerName']>()}</div>
+      ),
+      meta: {
+        label: t('leads.name'),
+        placeholder: t('leads.search'),
+        variant: 'text' as const,
+        icon: Icons.user
+      },
+      enableColumnFilter: true
+    },
+    {
+      id: 'status',
+      accessorKey: 'status',
+      enableSorting: false,
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title={t('leads.status')} />
+      ),
+      cell: ({ cell }) => {
+        const status = cell.getValue<Lead['status']>();
+        const statusInfo = statusLabels[status] ?? {
+          sv: status,
+          en: status,
+          variant: 'outline' as const
+        };
+        return (
+          <Badge variant={statusInfo.variant} className='capitalize'>
+            {statusInfo.sv}
+          </Badge>
+        );
+      },
+      enableColumnFilter: true,
+      meta: {
+        label: t('leads.status'),
+        variant: 'multiSelect' as const,
+        options: statusOptions
+      }
+    },
+    {
+      accessorKey: 'duration',
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title={t('leads.duration')} />
+      ),
+      cell: ({ cell }) => {
+        const seconds = cell.getValue<Lead['duration']>();
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return (
+          <span className='font-mono tabular-nums'>
+            {mins}:{secs.toString().padStart(2, '0')}
+          </span>
+        );
+      }
+    },
+    {
+      accessorKey: 'aiSummary',
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title={t('leads.ai-summary')} />
+      ),
+      cell: ({ cell }) => (
+        <div className='max-w-[300px] truncate text-sm text-muted-foreground'>
+          {cell.getValue<Lead['aiSummary']>()}
+        </div>
+      )
+    },
+    {
+      id: 'campaignType',
+      accessorKey: 'campaignType',
+      enableSorting: false,
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title='Kampanjtyp' />
+      ),
+      cell: ({ cell }) => {
+        const type = cell.getValue<Lead['campaignType']>();
+        const label = type === 'outbound' ? 'Utgående' : 'Ingående';
+        const Icon = type === 'outbound' ? Icons.phoneOutgoing : Icons.phoneIncoming;
+        return (
+          <Badge variant='outline' className='gap-1'>
+            <Icon className='h-3 w-3' />
+            {label}
+          </Badge>
+        );
+      },
+      enableColumnFilter: true,
+      meta: {
+        label: 'Kampanjtyp',
+        variant: 'multiSelect' as const,
+        options: campaignTypeOptions
+      }
+    }
+  ] as ColumnDef<Lead>[];
+};
