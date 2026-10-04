@@ -87,7 +87,9 @@ export function TranscriptList({ transcripts, selectedId, onSelect }: Transcript
               key={transcript.id}
               onClick={() => onSelect(transcript.id)}
               className={`w-full text-left p-3 rounded-lg transition-colors relative ${
-                isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted/50'
+                isSelected
+                  ? 'bg-primary text-primary-foreground shadow-lg'
+                  : 'hover:bg-muted/50 bg-background'
               }`}
             >
               {/* Live indicator pulse */}
@@ -113,24 +115,34 @@ export function TranscriptList({ transcripts, selectedId, onSelect }: Transcript
                       }`}
                     >
                       <StatusIcon
-                        className={`h-4 w-4 ${isLive ? 'text-yellow-600 dark:text-yellow-400' : 'text-primary'}`}
+                        className={`h-4 w-4 ${isLive ? 'text-yellow-600 dark:text-yellow-400' : isSelected ? 'text-primary-foreground' : 'text-primary'}`}
                       />
                     </div>
                     <div className='min-w-0'>
-                      <p className='font-medium truncate'>{transcript.customerName}</p>
-                      <p className='text-sm text-muted-foreground truncate'>
+                      <p
+                        className={`font-medium truncate ${isSelected ? 'text-primary-foreground' : 'text-foreground'}`}
+                      >
+                        {transcript.customerName}
+                      </p>
+                      <p
+                        className={`text-sm truncate ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}
+                      >
                         {transcript.phoneNumber}
                       </p>
                     </div>
                   </div>
-                  <div className='mt-2 flex items-center gap-2 text-xs text-muted-foreground'>
+                  <div className='mt-2 flex items-center gap-2 text-xs'>
                     {transcript.duration && (
-                      <span className='flex items-center gap-1'>
+                      <span
+                        className={`flex items-center gap-1 ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}
+                      >
                         <Icons.clock className='h-3 w-3' />
                         {transcript.duration}
                       </span>
                     )}
-                    <span className='flex items-center gap-1'>
+                    <span
+                      className={`flex items-center gap-1 ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}
+                    >
                       <Icons.calendar className='h-3 w-3' />
                       {new Date(transcript.startedAt).toLocaleDateString('sv-SE', {
                         day: '2-digit',
@@ -145,15 +157,37 @@ export function TranscriptList({ transcripts, selectedId, onSelect }: Transcript
               <div className='mt-2 flex items-center justify-end gap-2'>
                 {transcript.outcome && (
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded ${outcome.variant === 'default' ? 'bg-primary/10 text-primary' : outcome.variant === 'secondary' ? 'bg-secondary/10 text-secondary-foreground' : outcome.variant === 'destructive' ? 'bg-destructive/10 text-destructive' : 'bg-muted/50 text-muted-foreground'}`}
+                    className={`text-[10px] px-2 py-0.5 rounded ${
+                      isSelected
+                        ? 'bg-primary-foreground/20 text-primary-foreground'
+                        : outcome.variant === 'default'
+                          ? 'bg-primary/10 text-primary'
+                          : outcome.variant === 'secondary'
+                            ? 'bg-secondary/10 text-secondary-foreground'
+                            : outcome.variant === 'destructive'
+                              ? 'bg-destructive/10 text-destructive'
+                              : 'bg-muted/50 text-muted-foreground'
+                    }`}
                   >
                     {outcome.sv}
                   </span>
                 )}
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded ${status.variant === 'default' ? 'bg-primary/10 text-primary' : status.variant === 'secondary' ? 'bg-secondary/10 text-secondary-foreground' : status.variant === 'destructive' ? 'bg-destructive/10 text-destructive' : 'bg-muted/50 text-muted-foreground'} flex items-center gap-1`}
+                  className={`text-[10px] px-2 py-0.5 rounded flex items-center gap-1 ${
+                    isSelected
+                      ? 'bg-primary-foreground/20 text-primary-foreground'
+                      : status.variant === 'default'
+                        ? 'bg-primary/10 text-primary'
+                        : status.variant === 'secondary'
+                          ? 'bg-secondary/10 text-secondary-foreground'
+                          : status.variant === 'destructive'
+                            ? 'bg-destructive/10 text-destructive'
+                            : 'bg-muted/50 text-muted-foreground'
+                  }`}
                 >
-                  <StatusIcon className='h-3 w-3' />
+                  <StatusIcon
+                    className={`h-3 w-3 ${isSelected ? 'text-primary-foreground' : ''}`}
+                  />
                   {status.sv}
                 </span>
               </div>
