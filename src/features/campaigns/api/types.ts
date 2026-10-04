@@ -12,6 +12,11 @@ export type Campaign = {
   answeredCalls: number;
   bookedMeetings: number;
   organizationId: string;
+  // Scheduling fields for outbound campaigns
+  scheduleStartTime?: string; // HH:mm format
+  scheduleEndTime?: string; // HH:mm format
+  scheduleDate?: string; // ISO date string (YYYY-MM-DD)
+  scheduleDays?: number[]; // 0-6 for recurring, or single date
 };
 
 export type CampaignFilters = {
@@ -46,6 +51,10 @@ export type CampaignMutationPayload = {
   type: CampaignType;
   phoneNumbers: Array<{ name: string; phone: string }>;
   organizationId: string;
+  // Scheduling fields
+  scheduleStartTime?: string;
+  scheduleEndTime?: string;
+  scheduleDate?: string;
 };
 
 export type CSVRow = {

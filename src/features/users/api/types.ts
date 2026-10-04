@@ -11,6 +11,13 @@ export type Lead = {
   createdAt: string;
   updatedAt: string;
   organizationId: string;
+  // Follow-up fields
+  followUpAt?: string; // ISO date string for scheduled callback
+  followUpStatus?: 'pending' | 'completed' | 'cancelled';
+  followUpNotes?: string;
+  // Campaign reference
+  campaignId?: string;
+  campaignName?: string;
 };
 
 export type CreateLeadData = Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>;
@@ -23,6 +30,11 @@ export type LeadFilters = {
   search?: string;
   sort?: string;
   organizationId?: string; // 🔒 SECURE: Organization filter
+  // Date/time filters
+  dateFrom?: string; // ISO date string
+  dateTo?: string; // ISO date string
+  followUpStatus?: 'pending' | 'completed' | 'cancelled' | 'all';
+  hasFollowUp?: boolean;
 };
 
 export type LeadsResponse = {

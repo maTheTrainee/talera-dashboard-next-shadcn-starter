@@ -31,6 +31,11 @@ import { useI18n } from '@/lib/i18n';
 import { campaignSchema, quickDialSchema } from '../schemas/campaign';
 import { createCampaign, quickDial, parseCSV, generateCSVTemplate } from '../api/service';
 import { useOrganization } from '@clerk/nextjs';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { sv } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export function CampaignStarter() {
   const { t } = useI18n();
@@ -41,13 +46,17 @@ export function CampaignStarter() {
   const [csvPreview, setCsvPreview] = useState<Array<{ name: string; phone: string }> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isQuickDialSubmitting, setIsQuickDialSubmitting] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState<Date | undefined>(new Date());
 
   // Bulk Import Form - using useAppForm with field components
   const bulkForm = useAppForm({
     defaultValues: {
       name: '',
       type: 'outbound' as 'outbound' | 'inbound',
-      phoneNumbers: [] as Array<{ name: string; phone: string }>
+      phoneNumbers: [] as Array<{ name: string; phone: string }>,
+      scheduleStartTime: '08:00',
+      scheduleEndTime: '12:00',
+      scheduleDate: format(new Date(), 'yyyy-MM-dd')
     },
     validators: {
       onSubmit: campaignSchema
@@ -146,6 +155,19 @@ export function CampaignStarter() {
   };
 
   const bulkPhoneNumbers = bulkForm.state.values.phoneNumbers;
+  const campaignType = bulkForm.state.values.type;
+
+  const getScheduleDiff = () => {
+    const start = bulkForm.state.values.scheduleStartTime;
+    const end = bulkForm.state.values.scheduleEndTime;
+    if (!start || !end) return 0;
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    return eh * 60 + em - (sh * 60 + sm);
+  };
+
+  const scheduleDiff = getScheduleDiff();
+  const isScheduleValid = scheduleDiff >= 240;
 
   return (
     <div className='space-y-6'>
@@ -214,6 +236,109 @@ export function CampaignStarter() {
                 </bulkForm.AppField>
               </div>
 
+              {/* Scheduling for outbound campaigns */}
+              {campaignType === 'outbound' && (
+                <div className='space-y-4 border rounded-lg p-4 bg-muted/30'>
+                  <div className='flex items-center gap-2'>
+                    <Icons.clock className='h-5 w-5 text-primary' />
+                    <h4 className='font-medium'>{t('campaign.scheduling') || 'Schemaläggning'}</h4>
+                    <span className='text-xs text-muted-foreground ml-auto'>
+                      {t('campaign.min-4-hours') || 'Minst 4 timmar'}
+                    </span>
+                  </div>
+                  <p className='text-sm text-muted-foreground'>
+                    {t('campaign.scheduling-desc') ||
+                      'Välj datum och tidsfönster då kampanjen ska ringa. Systemet försöker ringa alla nummer inom tidsfönstret men garanterar inte att alla nårrs. Minst 4 timmar krävs.'}
+                  </p>
+
+                  <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='schedule-date'>{t('campaign.date') || 'Datum'}</Label>
+                      <Popover>
+                        <PopoverTrigger>
+                          <Button
+                            variant={scheduleDate ? 'default' : 'outline'}
+                            className='w-full justify-start text-left h-10 px-3'
+                          >
+                            <Icons.calendar className='h-4 w-4 mr-2' />
+                            {scheduleDate
+                              ? format(scheduleDate, 'dd MMMM yyyy', { locale: sv })
+                              : 'Välj datum'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-auto p-0' align='start' sideOffset={5}>
+                          <Calendar
+                            mode='single'
+                            selected={scheduleDate}
+                            onSelect={setScheduleDate}
+                            locale={sv}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='schedule-start'>
+                        {t('campaign.start-time') || 'Starttid'}
+                      </Label>
+                      <bulkForm.AppField name='scheduleStartTime'>
+                        {(field) => (
+                          <field.TextField
+                            id='schedule-start'
+                            type='time'
+                            label={t('campaign.start-time') || 'Starttid'}
+                            placeholder='08:00'
+                            {...{
+                              value: field.state.value ?? '',
+                              onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                                field.handleChange(e.target.value),
+                              onBlur: field.handleBlur,
+                              name: field.name
+                            }}
+                          />
+                        )}
+                      </bulkForm.AppField>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='schedule-end'>{t('campaign.end-time') || 'Sluttid'}</Label>
+                      <bulkForm.AppField name='scheduleEndTime'>
+                        {(field) => (
+                          <field.TextField
+                            id='schedule-end'
+                            type='time'
+                            label={t('campaign.end-time') || 'Sluttid'}
+                            placeholder='12:00'
+                            {...{
+                              value: field.state.value ?? '',
+                              onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                                field.handleChange(e.target.value),
+                              onBlur: field.handleBlur,
+                              name: field.name
+                            }}
+                          />
+                        )}
+                      </bulkForm.AppField>
+                    </div>
+                  </div>
+
+                  {/* Schedule validation feedback */}
+                  <div
+                    className={cn(
+                      'flex items-center gap-2 text-sm p-3 rounded-lg',
+                      isScheduleValid
+                        ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                        : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                    )}
+                  >
+                    <Icons.info className='h-4 w-4 flex-shrink-0' />
+                    <span>
+                      {isScheduleValid
+                        ? `${t('campaign.schedule-valid') || 'Tidsfönster OK'}: ${Math.floor(scheduleDiff / 60)}h ${scheduleDiff % 60}min`
+                        : `${t('campaign.schedule-invalid') || 'Tidsfönster för kort'}: ${Math.floor(scheduleDiff / 60)}h ${scheduleDiff % 60}min ${t('campaign.min-4-hours-required') || '(minst 4 timmar krävs)'}`}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <Separator className='my-4' />
 
               <div className='space-y-2'>
@@ -281,7 +406,11 @@ export function CampaignStarter() {
                 type='submit'
                 className='w-full'
                 loading={isSubmitting}
-                disabled={!csvPreview || csvPreview.length === 0}
+                disabled={
+                  !csvPreview ||
+                  csvPreview.length === 0 ||
+                  (campaignType === 'outbound' && !isScheduleValid)
+                }
               >
                 <Icons.send className='mr-2 h-4 w-4' />
                 {t('campaign.launch-campaign')}

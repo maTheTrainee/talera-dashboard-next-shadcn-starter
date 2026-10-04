@@ -18,6 +18,15 @@ const statusLabels: Record<
   lost: { sv: 'Förlorad', en: 'Lost', variant: 'destructive' }
 };
 
+const followUpStatusLabels: Record<
+  string,
+  { sv: string; en: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+> = {
+  pending: { sv: 'Väntar', en: 'Pending', variant: 'default' },
+  completed: { sv: 'Avslutad', en: 'Completed', variant: 'secondary' },
+  cancelled: { sv: 'Avbruten', en: 'Cancelled', variant: 'destructive' }
+};
+
 const statusOptions = [
   { value: 'new', label: 'Ny' },
   { value: 'contacted', label: 'Kontaktad' },
@@ -30,6 +39,12 @@ const statusOptions = [
 const campaignTypeOptions = [
   { value: 'outbound', label: 'Utgående' },
   { value: 'inbound', label: 'Ingående' }
+];
+
+const followUpStatusOptions = [
+  { value: 'pending', label: 'Väntar' },
+  { value: 'completed', label: 'Avslutad' },
+  { value: 'cancelled', label: 'Avbruten' }
 ];
 
 export const leadColumns = () => {
@@ -69,6 +84,24 @@ export const leadColumns = () => {
       enableColumnFilter: true
     },
     {
+      accessorKey: 'campaignName',
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title='Kampanj' />
+      ),
+      cell: ({ cell }) => (
+        <div className='max-w-[200px] truncate text-sm'>
+          {cell.getValue<Lead['campaignName']>() ?? '—'}
+        </div>
+      ),
+      meta: {
+        label: 'Kampanj',
+        placeholder: 'Sök kampanj...',
+        variant: 'text' as const,
+        icon: Icons.phone
+      },
+      enableColumnFilter: true
+    },
+    {
       id: 'status',
       accessorKey: 'status',
       enableSorting: false,
@@ -93,6 +126,56 @@ export const leadColumns = () => {
         label: t('leads.status'),
         variant: 'multiSelect' as const,
         options: statusOptions
+      }
+    },
+    {
+      id: 'followUpStatus',
+      accessorKey: 'followUpStatus',
+      enableSorting: false,
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title='Uppföljning' />
+      ),
+      cell: ({ cell }) => {
+        const followUpAt = cell.row.original.followUpAt;
+        const followUpStatus = cell.getValue<Lead['followUpStatus']>();
+
+        if (!followUpAt) {
+          return <span className='text-muted-foreground text-sm'>—</span>;
+        }
+
+        const statusInfo = followUpStatusLabels[followUpStatus ?? 'pending'] ?? {
+          sv: 'Okänd',
+          en: 'Unknown',
+          variant: 'outline' as const
+        };
+
+        const followUpDate = new Date(followUpAt);
+        const formattedDate = followUpDate.toLocaleString('sv-SE', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        return (
+          <div className='flex items-center gap-2'>
+            <Badge variant={statusInfo.variant} className='capitalize'>
+              {statusInfo.sv}
+            </Badge>
+            <span className='text-sm text-muted-foreground'>{formattedDate}</span>
+            {cell.row.original.followUpNotes && (
+              <span className='text-xs text-muted-foreground max-w-[150px] truncate'>
+                {cell.row.original.followUpNotes}
+              </span>
+            )}
+          </div>
+        );
+      },
+      enableColumnFilter: true,
+      meta: {
+        label: 'Uppföljning',
+        variant: 'multiSelect' as const,
+        options: followUpStatusOptions
       }
     },
     {

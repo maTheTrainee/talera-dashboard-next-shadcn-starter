@@ -42,7 +42,12 @@ const mockLeads: Lead[] = [
     campaignType: 'outbound',
     createdAt: '2026-10-03T10:15:00Z',
     updatedAt: '2026-10-03T10:19:32Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-1',
+    campaignName: 'Q4 Avtalssättning - Säkerhetsbolag',
+    followUpAt: '2026-10-10T10:00:00Z',
+    followUpStatus: 'pending',
+    followUpNotes: 'Bokat möte - skicka bekräftelse'
   },
   {
     id: '2',
@@ -54,7 +59,12 @@ const mockLeads: Lead[] = [
     campaignType: 'outbound',
     createdAt: '2026-10-03T09:45:00Z',
     updatedAt: '2026-10-03T09:47:18Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-1',
+    campaignName: 'Q4 Avtalssättning - Säkerhetsbolag',
+    followUpAt: '2026-10-07T14:00:00Z',
+    followUpStatus: 'pending',
+    followUpNotes: 'Ring tillbaka nästa vecka'
   },
   {
     id: '3',
@@ -66,7 +76,9 @@ const mockLeads: Lead[] = [
     campaignType: 'outbound',
     createdAt: '2026-10-03T09:30:00Z',
     updatedAt: '2026-10-03T09:30:45Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-3',
+    campaignName: 'Black Friday Kampanj'
   },
   {
     id: '4',
@@ -79,7 +91,9 @@ const mockLeads: Lead[] = [
     campaignType: 'inbound',
     createdAt: '2026-10-03T11:20:00Z',
     updatedAt: '2026-10-03T11:26:45Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-2',
+    campaignName: 'Support AI - Inkommande'
   },
   {
     id: '5',
@@ -92,7 +106,9 @@ const mockLeads: Lead[] = [
     campaignType: 'inbound',
     createdAt: '2026-10-03T10:55:00Z',
     updatedAt: '2026-10-03T10:58:22Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-2',
+    campaignName: 'Support AI - Inkommande'
   },
   {
     id: '6',
@@ -104,7 +120,9 @@ const mockLeads: Lead[] = [
     campaignType: 'inbound',
     createdAt: '2026-10-03T10:30:00Z',
     updatedAt: '2026-10-03T10:33:10Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-2',
+    campaignName: 'Support AI - Inkommande'
   },
   {
     id: '7',
@@ -116,7 +134,12 @@ const mockLeads: Lead[] = [
     campaignType: 'inbound',
     createdAt: '2026-10-03T10:05:00Z',
     updatedAt: '2026-10-03T10:07:10Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-2',
+    campaignName: 'Support AI - Inkommande',
+    followUpAt: '2026-10-08T11:00:00Z',
+    followUpStatus: 'pending',
+    followUpNotes: 'Uppföljning enterprise-lösning'
   },
   {
     id: '8',
@@ -128,7 +151,9 @@ const mockLeads: Lead[] = [
     campaignType: 'inbound',
     createdAt: '2026-10-03T09:40:00Z',
     updatedAt: '2026-10-03T09:41:55Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-2',
+    campaignName: 'Support AI - Inkommande'
   },
   {
     id: '9',
@@ -140,7 +165,12 @@ const mockLeads: Lead[] = [
     campaignType: 'outbound',
     createdAt: '2026-10-03T09:15:00Z',
     updatedAt: '2026-10-03T09:18:56Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-1',
+    campaignName: 'Q4 Avtalssättning - Säkerhetsbolag',
+    followUpAt: '2026-10-11T14:00:00Z',
+    followUpStatus: 'pending',
+    followUpNotes: 'Demo AI-agent för support'
   },
   {
     id: '10',
@@ -152,7 +182,9 @@ const mockLeads: Lead[] = [
     campaignType: 'outbound',
     createdAt: '2026-10-03T08:50:00Z',
     updatedAt: '2026-10-03T08:51:23Z',
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    campaignId: 'camp-3',
+    campaignName: 'Black Friday Kampanj'
   }
 ];
 
@@ -172,6 +204,22 @@ export async function getLeads(filters: LeadFilters): Promise<LeadsResponse> {
     leads = leads.filter(
       (l) => l.customerName.toLowerCase().includes(search) || l.phoneNumber.includes(search)
     );
+  }
+  // Date range filtering
+  if (filters.dateFrom) {
+    const fromDate = new Date(filters.dateFrom).getTime();
+    leads = leads.filter((l) => new Date(l.createdAt).getTime() >= fromDate);
+  }
+  if (filters.dateTo) {
+    const toDate = new Date(filters.dateTo).getTime();
+    leads = leads.filter((l) => new Date(l.createdAt).getTime() <= toDate);
+  }
+  // Follow-up status filtering
+  if (filters.followUpStatus && filters.followUpStatus !== 'all') {
+    leads = leads.filter((l) => l.followUpStatus === filters.followUpStatus);
+  }
+  if (filters.hasFollowUp) {
+    leads = leads.filter((l) => !!l.followUpAt);
   }
 
   if (filters.sort) {
