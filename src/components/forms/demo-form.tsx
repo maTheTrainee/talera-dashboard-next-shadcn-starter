@@ -16,8 +16,10 @@ import { Icons } from '@/components/icons';
 // Schema — validated on submit, errors display next to each field
 const demoFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.email('Invalid email address'),
-  age: z.number({ error: 'Age is required' }).min(18, 'Must be at least 18 years old'),
+  email: z.string().email('Invalid email address'),
+  age: z
+    .number({ required_error: 'Age is required', invalid_type_error: 'Age must be a number' })
+    .min(18, 'Must be at least 18 years old'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   phone: z.string().min(10, 'Phone must be at least 10 digits'),
   website: z.string().url('Invalid URL').or(z.literal('')),

@@ -5,7 +5,7 @@ export const campaignSchema = z.object({
     .string()
     .min(2, 'Kampanjnamn måste vara minst 2 tecken')
     .max(100, 'Kampanjnamn får vara max 100 tecken'),
-  type: z.enum(['outbound', 'inbound']).refine(() => true, { message: 'Välj kampanjtyp' }),
+  type: z.enum(['outbound', 'inbound'], { message: 'Välj kampanjtyp' }),
   phoneNumbers: z
     .array(
       z.object({

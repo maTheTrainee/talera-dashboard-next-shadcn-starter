@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAppForm } from '@/lib/form';
-import { zodValidator } from '@tanstack/zod-adapter';
+// import { zodValidator } from '@tanstack/zod-adapter';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { LoadingButton } from '@/components/ui/loading-button';
@@ -50,7 +50,7 @@ export function CampaignStarter() {
       phoneNumbers: [] as Array<{ name: string; phone: string }>
     },
     validators: {
-      onSubmit: zodValidator(campaignSchema)
+      onSubmit: campaignSchema
     },
     onSubmit: async ({ value }) => {
       if (!orgId) {
@@ -85,7 +85,7 @@ export function CampaignStarter() {
       organizationId: orgId || ''
     },
     validators: {
-      onSubmit: zodValidator(quickDialSchema)
+      onSubmit: quickDialSchema
     },
     onSubmit: async ({ value }) => {
       if (!orgId) {
