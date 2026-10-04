@@ -48,14 +48,6 @@ export const navGroups: NavGroup[] = [
         items: []
       },
       {
-        title: 'nav.start-campaign',
-        url: '/dashboard/product',
-        icon: 'phone',
-        shortcut: ['k', 'k'],
-        isActive: false,
-        items: []
-      },
-      {
         title: 'nav.campaigns',
         url: '/dashboard/campaigns',
         icon: 'list',
