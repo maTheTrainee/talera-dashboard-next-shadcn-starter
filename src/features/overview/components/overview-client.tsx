@@ -1,7 +1,7 @@
 'use client';
 
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { CampaignProvider, CampaignTypeToggle, useCampaignType } from './campaign-toggle';
+import { CampaignTypeToggle, useCampaignType, CampaignProvider } from './campaign-toggle';
 import { OverviewStats } from './overview-stats';
 import { OverviewAreaChart } from './overview-area-chart';
 import { OverviewBarChart } from './overview-bar-chart';
@@ -11,46 +11,35 @@ import { overviewStatsQueryOptions } from '../api/queries';
 import { useI18n } from '@/lib/i18n';
 import { Suspense } from 'react';
 
-export function OverviewStatsWrapper() {
-  const { t } = useI18n();
+interface OverviewClientProps {
+  campaignType: 'outbound' | 'inbound';
+}
+
+export function OverviewClient({ campaignType }: OverviewClientProps) {
+  return (
+    <CampaignProvider defaultType={campaignType}>
+      <OverviewInner />
+    </CampaignProvider>
+  );
+}
+
+function OverviewInner() {
   const { campaignType } = useCampaignType();
+  const { t } = useI18n();
   const { data } = useSuspenseQuery(overviewStatsQueryOptions({ campaignType }));
 
   if (!data?.stats) return null;
 
   return (
-    <CampaignProvider defaultType={campaignType}>
+    <div className='space-y-4'>
       <OverviewStats stats={data.stats} />
-    </CampaignProvider>
-  );
-}
-
-export function RecentEventsWrapper() {
-  const { t } = useI18n();
-  const { campaignType } = useCampaignType();
-  const { data } = useSuspenseQuery(overviewStatsQueryOptions({ campaignType }));
-
-  if (!data?.events) return null;
-
-  return (
-    <CampaignProvider defaultType={campaignType}>
-      <RecentEvents events={data.events} />
-    </CampaignProvider>
-  );
-}
-
-export function OverviewChartsWrapper() {
-  const { campaignType } = useCampaignType();
-
-  return (
-    <CampaignProvider defaultType={campaignType}>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7'>
         <div className='col-span-4'>
           <OverviewBarChart />
         </div>
         <div className='col-span-4 md:col-span-3'>
           <Suspense fallback={<div className='h-[400px] animate-pulse bg-muted/50 rounded-lg' />}>
-            <RecentEventsWrapper />
+            <RecentEvents events={data.events} />
           </Suspense>
         </div>
         <div className='col-span-4'>
@@ -60,6 +49,6 @@ export function OverviewChartsWrapper() {
           <OverviewPieChart />
         </div>
       </div>
-    </CampaignProvider>
+    </div>
   );
 }
