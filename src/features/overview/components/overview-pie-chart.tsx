@@ -15,47 +15,20 @@ import { useI18n } from '@/lib/i18n';
 import { useCampaignType } from './campaign-toggle';
 import React from 'react';
 
-const pieConfigOutbound = {
-  booked: {
-    label: 'Bokade möten',
-    color: 'var(--chart-1)'
-  },
-  answered: {
-    label: 'Svarade samtal',
-    color: 'var(--chart-2)'
-  },
-  voicemail: {
-    label: 'Röstbrevlåda',
-    color: 'var(--chart-3)'
-  },
-  missed: {
-    label: 'Missade',
-    color: 'var(--chart-4)'
-  },
-  busy: {
-    label: 'Upptagna',
-    color: 'var(--chart-5)'
-  }
-} satisfies ChartConfig;
+const pieConfigOutbound: ChartConfig = {
+  booked: { label: 'Bokade möten', color: 'var(--chart-1)' },
+  answered: { label: 'Svarade samtal', color: 'var(--chart-2)' },
+  voicemail: { label: 'Röstbrevlåda', color: 'var(--chart-3)' },
+  missed: { label: 'Missade', color: 'var(--chart-4)' },
+  busy: { label: 'Upptagna', color: 'var(--chart-5)' }
+};
 
-const pieConfigInbound = {
-  resolved: {
-    label: 'Lösta ärenden',
-    color: 'var(--chart-1)'
-  },
-  answered: {
-    label: 'Svarade samtal',
-    color: 'var(--chart-2)'
-  },
-  queued: {
-    label: 'Köade',
-    color: 'var(--chart-3)'
-  },
-  missed: {
-    label: 'Missade',
-    color: 'var(--chart-4)'
-  }
-} satisfies ChartConfig;
+const pieConfigInbound: ChartConfig = {
+  resolved: { label: 'Lösta ärenden', color: 'var(--chart-1)' },
+  answered: { label: 'Svarade samtal', color: 'var(--chart-2)' },
+  queued: { label: 'Köade', color: 'var(--chart-3)' },
+  missed: { label: 'Missade', color: 'var(--chart-4)' }
+};
 
 export function OverviewPieChart() {
   const { t } = useI18n();
@@ -83,7 +56,7 @@ export function OverviewPieChart() {
     <Card className='flex h-full flex-col'>
       <CardHeader className='items-center pb-0'>
         <CardTitle className='flex items-center justify-between'>
-          {campaignType === 'outbound' ? 'Utfall (Utgående)' : 'Utfall (Ingående)'}
+          {campaignType === 'outbound' ? t('overview.outbound') : t('overview.inbound')}
           <Badge variant='outline'>
             <Icons.trendingUp />
             {campaignType === 'outbound' ? '+5.2%' : '+12.1%'}

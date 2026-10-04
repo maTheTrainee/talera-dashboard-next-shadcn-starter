@@ -179,7 +179,12 @@ export function TranscriptView({ transcript }: TranscriptViewProps) {
         ) : (
           <>
             {transcript.messages.map((message, index) => (
-              <TranscriptMessageBubble key={message.id} message={message} index={index} />
+              <TranscriptMessageBubble
+                key={message.id}
+                message={message}
+                index={index}
+                isFirst={index === 0}
+              />
             ))}
             <div ref={messagesEndRef} />
           </>
@@ -192,15 +197,16 @@ export function TranscriptView({ transcript }: TranscriptViewProps) {
 interface TranscriptMessageBubbleProps {
   message: TranscriptMessage;
   index: number;
+  isFirst: boolean;
 }
 
-function TranscriptMessageBubble({ message, index }: TranscriptMessageBubbleProps) {
+function TranscriptMessageBubble({ message, index, isFirst }: TranscriptMessageBubbleProps) {
   const { t } = useI18n();
   const isAI = message.role === 'agent';
   const isStreaming = message.isStreaming;
 
   return (
-    <div className={`flex ${isAI ? 'justify-start' : 'justify-end'}`}>
+    <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} ${isFirst ? 'mt-4' : ''}`}>
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 transition-colors ${
           isAI ? 'bg-muted rounded-bl-sm' : 'bg-primary text-primary-foreground rounded-br-sm'

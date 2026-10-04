@@ -196,45 +196,39 @@ export function CampaignStarter() {
               }}
               className='space-y-4'
             >
-              <div className='space-y-2'>
-                <Label htmlFor='campaign-name'>{t('campaign.campaign-name')}</Label>
-                <bulkForm.AppField name='name'>
-                  {(field) => (
-                    <field.TextField
-                      label={t('campaign.campaign-name')}
-                      id='campaign-name'
-                      placeholder='T.ex. Q4 Avtalssättning'
-                      {...{
-                        value: field.state.value ?? '',
-                        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-                          field.handleChange(e.target.value),
-                        onBlur: field.handleBlur,
-                        name: field.name
-                      }}
-                    />
-                  )}
-                </bulkForm.AppField>
-              </div>
-              <div className='space-y-2'>
-                <Label>{t('campaign.campaign-type')}</Label>
-                <bulkForm.AppField name='type'>
-                  {(field) => (
-                    <field.SelectField
-                      label={t('campaign.campaign-type')}
-                      placeholder={t('campaign.select-type')}
-                      options={[
-                        { value: 'outbound', label: t('campaign.outbound') },
-                        { value: 'inbound', label: t('campaign.inbound') }
-                      ]}
-                      {...{
-                        value: field.state.value ?? '',
-                        onChange: (v: string) => field.handleChange(v as 'outbound' | 'inbound'),
-                        name: field.name
-                      }}
-                    />
-                  )}
-                </bulkForm.AppField>
-              </div>
+              <bulkForm.AppField name='name'>
+                {(field) => (
+                  <field.TextField
+                    label={t('campaign.campaign-name')}
+                    id='campaign-name'
+                    placeholder='T.ex. Q4 Avtalssättning'
+                    {...{
+                      value: field.state.value ?? '',
+                      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                        field.handleChange(e.target.value),
+                      onBlur: field.handleBlur,
+                      name: field.name
+                    }}
+                  />
+                )}
+              </bulkForm.AppField>
+              <bulkForm.AppField name='type'>
+                {(field) => (
+                  <field.SelectField
+                    label={t('campaign.campaign-type')}
+                    placeholder={t('campaign.select-type')}
+                    options={[
+                      { value: 'outbound', label: t('campaign.outbound') },
+                      { value: 'inbound', label: t('campaign.inbound') }
+                    ]}
+                    {...{
+                      value: field.state.value ?? '',
+                      onChange: (v: string) => field.handleChange(v as 'outbound' | 'inbound'),
+                      name: field.name
+                    }}
+                  />
+                )}
+              </bulkForm.AppField>
 
               {/* Scheduling for outbound campaigns */}
               {campaignType === 'outbound' && (
@@ -253,7 +247,6 @@ export function CampaignStarter() {
 
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
                     <div className='space-y-2'>
-                      <Label htmlFor='schedule-date'>{t('campaign.date') || 'Datum'}</Label>
                       <Popover>
                         <PopoverTrigger>
                           <Button
@@ -277,9 +270,6 @@ export function CampaignStarter() {
                       </Popover>
                     </div>
                     <div className='space-y-2'>
-                      <Label htmlFor='schedule-start'>
-                        {t('campaign.start-time') || 'Starttid'}
-                      </Label>
                       <bulkForm.AppField name='scheduleStartTime'>
                         {(field) => (
                           <field.TextField
@@ -299,7 +289,6 @@ export function CampaignStarter() {
                       </bulkForm.AppField>
                     </div>
                     <div className='space-y-2'>
-                      <Label htmlFor='schedule-end'>{t('campaign.end-time') || 'Sluttid'}</Label>
                       <bulkForm.AppField name='scheduleEndTime'>
                         {(field) => (
                           <field.TextField
@@ -436,64 +425,55 @@ export function CampaignStarter() {
               }}
               className='space-y-4'
             >
-              <div className='space-y-2'>
-                <Label htmlFor='quick-name'>{t('campaign.contact-name')}</Label>
-                <quickDialForm.AppField name='name'>
-                  {(field) => (
-                    <field.TextField
-                      label={t('campaign.contact-name')}
-                      id='quick-name'
-                      placeholder='T.ex. Erik Andersson'
-                      {...{
-                        value: field.state.value ?? '',
-                        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-                          field.handleChange(e.target.value),
-                        onBlur: field.handleBlur,
-                        name: field.name
-                      }}
-                    />
-                  )}
-                </quickDialForm.AppField>
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='quick-phone'>{t('campaign.phone-number')}</Label>
-                <quickDialForm.AppField name='phone'>
-                  {(field) => (
-                    <field.TextField
-                      label={t('campaign.phone-number')}
-                      id='quick-phone'
-                      placeholder='+46 70 123 45 67'
-                      {...{
-                        value: field.state.value ?? '',
-                        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-                          field.handleChange(e.target.value),
-                        onBlur: field.handleBlur,
-                        name: field.name
-                      }}
-                    />
-                  )}
-                </quickDialForm.AppField>
-              </div>
-              <div className='space-y-2'>
-                <Label>{t('campaign.campaign-type')}</Label>
-                <quickDialForm.AppField name='campaignType'>
-                  {(field) => (
-                    <field.SelectField
-                      label={t('campaign.campaign-type')}
-                      placeholder={t('campaign.select-type')}
-                      options={[
-                        { value: 'outbound', label: t('campaign.outbound') },
-                        { value: 'inbound', label: t('campaign.inbound') }
-                      ]}
-                      {...{
-                        value: field.state.value ?? '',
-                        onChange: (v: string) => field.handleChange(v as 'outbound' | 'inbound'),
-                        name: field.name
-                      }}
-                    />
-                  )}
-                </quickDialForm.AppField>
-              </div>
+              <quickDialForm.AppField name='name'>
+                {(field) => (
+                  <field.TextField
+                    label={t('campaign.contact-name')}
+                    id='quick-name'
+                    placeholder='T.ex. Erik Andersson'
+                    {...{
+                      value: field.state.value ?? '',
+                      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                        field.handleChange(e.target.value),
+                      onBlur: field.handleBlur,
+                      name: field.name
+                    }}
+                  />
+                )}
+              </quickDialForm.AppField>
+              <quickDialForm.AppField name='phone'>
+                {(field) => (
+                  <field.TextField
+                    label={t('campaign.phone-number')}
+                    id='quick-phone'
+                    placeholder='+46 70 123 45 67'
+                    {...{
+                      value: field.state.value ?? '',
+                      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                        field.handleChange(e.target.value),
+                      onBlur: field.handleBlur,
+                      name: field.name
+                    }}
+                  />
+                )}
+              </quickDialForm.AppField>
+              <quickDialForm.AppField name='campaignType'>
+                {(field) => (
+                  <field.SelectField
+                    label={t('campaign.campaign-type')}
+                    placeholder={t('campaign.select-type')}
+                    options={[
+                      { value: 'outbound', label: t('campaign.outbound') },
+                      { value: 'inbound', label: t('campaign.inbound') }
+                    ]}
+                    {...{
+                      value: field.state.value ?? '',
+                      onChange: (v: string) => field.handleChange(v as 'outbound' | 'inbound'),
+                      name: field.name
+                    }}
+                  />
+                )}
+              </quickDialForm.AppField>
 
               <LoadingButton type='submit' className='w-full' loading={isQuickDialSubmitting}>
                 <Icons.phoneOutgoing className='mr-2 h-4 w-4' />
