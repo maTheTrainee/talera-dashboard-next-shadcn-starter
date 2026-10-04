@@ -49,6 +49,7 @@ import {
   IconItalic,
   IconLayoutDashboard,
   IconLayoutKanban,
+  IconLayoutList,
   IconLayoutSidebar,
   IconLoader2,
   IconLock,
@@ -132,6 +133,7 @@ export const Icons = {
   // Layout
   dashboard: IconLayoutDashboard,
   kanban: IconLayoutKanban,
+  list: IconLayoutList,
   panelLeft: IconLayoutSidebar,
 
   // User

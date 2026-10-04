@@ -12,6 +12,7 @@ export const translations: Translations = {
   'nav.settings': { sv: 'Inställningar', en: 'Settings' },
   'nav.overview': { sv: 'Översikt', en: 'Overview' },
   'nav.start-campaign': { sv: 'Starta Kampanj', en: 'Start Campaign' },
+  'nav.campaigns': { sv: 'Kampanjer', en: 'Campaigns' },
   'nav.recipients-prospects': { sv: 'Mottagare & Prospekt', en: 'Recipients & Prospects' },
   'nav.realtime-view': { sv: 'Realtidsvy', en: 'Realtime View' },
   'nav.call-transcripts': { sv: 'Samtals-Transkriptioner', en: 'Call Transcripts' },

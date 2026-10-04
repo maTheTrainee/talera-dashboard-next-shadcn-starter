@@ -20,7 +20,11 @@ const mockCampaigns: Campaign[] = [
     calledNumbers: 342,
     answeredCalls: 245,
     bookedMeetings: 42,
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    scheduleStartTime: '08:00',
+    scheduleEndTime: '16:00',
+    scheduleDate: '2026-10-03',
+    startedAt: '2026-10-03T08:15:00Z'
   },
   {
     id: 'camp-2',
@@ -46,7 +50,12 @@ const mockCampaigns: Campaign[] = [
     calledNumbers: 1000,
     answeredCalls: 723,
     bookedMeetings: 156,
-    organizationId: 'org-1'
+    organizationId: 'org-1',
+    scheduleStartTime: '09:00',
+    scheduleEndTime: '17:00',
+    scheduleDate: '2026-10-25',
+    startedAt: '2026-10-25T09:05:00Z',
+    completedAt: '2026-10-25T16:00:00Z'
   }
 ];
 

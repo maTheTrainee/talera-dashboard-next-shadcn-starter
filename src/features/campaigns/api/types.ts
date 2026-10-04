@@ -17,6 +17,9 @@ export type Campaign = {
   scheduleEndTime?: string; // HH:mm format
   scheduleDate?: string; // ISO date string (YYYY-MM-DD)
   scheduleDays?: number[]; // 0-6 for recurring, or single date
+  // Tracking fields
+  startedAt?: string; // When campaign started making calls
+  completedAt?: string; // When campaign completed
 };
 
 export type CampaignFilters = {

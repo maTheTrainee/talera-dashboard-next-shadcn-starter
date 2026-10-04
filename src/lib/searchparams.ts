@@ -14,7 +14,8 @@ export const searchParams = {
   role: parseAsString,
   sort: parseAsString,
   campaignType: parseAsString,
-  status: parseAsString
+  status: parseAsString,
+  type: parseAsString
   // advanced filter
   // filters: getFiltersStateParser().withDefault([]),
   // joinOperator: parseAsStringEnum(['and', 'or']).withDefault('and')
