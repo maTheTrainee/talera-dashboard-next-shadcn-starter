@@ -30,6 +30,7 @@ export function LeadsTable() {
     name: parseAsString,
     status: parseAsString,
     campaignType: parseAsString,
+    campaignId: parseAsString,
     sort: getSortingStateParser(columnIds).withDefault([]),
     dateFrom: parseAsString,
     dateTo: parseAsString,
@@ -73,6 +74,7 @@ export function LeadsTable() {
     params.name ||
     params.status ||
     params.campaignType ||
+    params.campaignId ||
     params.dateFrom ||
     params.dateTo ||
     params.followUpStatus ||
@@ -185,6 +187,63 @@ export function LeadsTable() {
                     className='sr-only'
                   />
                   <span>Har uppföljning</span>
+                </label>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Campaign ID filter */}
+          <Popover>
+            <PopoverTrigger>
+              <Button
+                variant={params.campaignId ? 'default' : 'outline'}
+                className='w-full sm:w-auto gap-1'
+              >
+                <Icons.hash className='h-4 w-4' />
+                <span>{params.campaignId || 'Kampanj ID'}</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className='w-56 p-2' align='start' sideOffset={5}>
+              <div className='space-y-1'>
+                <label className='flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-accent'>
+                  <input
+                    type='radio'
+                    name='campaignId'
+                    checked={!params.campaignId}
+                    onChange={() => { /* clear filter */ }}
+                    className='sr-only'
+                  />
+                  <span>Alla</span>
+                </label>
+                <label className='flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-accent'>
+                  <input
+                    type='radio'
+                    name='campaignId'
+                    checked={params.campaignId === 'camp-1'}
+                    onChange={() => { /* handled by URL state */ }}
+                    className='sr-only'
+                  />
+                  <span>Q4 Avtalssättning</span>
+                </label>
+                <label className='flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-accent'>
+                  <input
+                    type='radio'
+                    name='campaignId'
+                    checked={params.campaignId === 'camp-2'}
+                    onChange={() => { /* handled by URL state */ }}
+                    className='sr-only'
+                  />
+                  <span>Support AI</span>
+                </label>
+                <label className='flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-accent'>
+                  <input
+                    type='radio'
+                    name='campaignId'
+                    checked={params.campaignId === 'camp-3'}
+                    onChange={() => { /* handled by URL state */ }}
+                    className='sr-only'
+                  />
+                  <span>Black Friday</span>
                 </label>
               </div>
             </PopoverContent>

@@ -13,6 +13,7 @@ export type Lead = {
   organizationId: string;
   // Follow-up fields
   followUpAt?: string; // ISO date string for scheduled callback
+  followUpDateTime?: string; // ISO date-time string for exact callback time (e.g., "2026-10-07T14:30:00Z")
   followUpStatus?: 'pending' | 'completed' | 'cancelled';
   followUpNotes?: string;
   // Campaign reference
@@ -35,6 +36,8 @@ export type LeadFilters = {
   dateTo?: string; // ISO date string
   followUpStatus?: 'pending' | 'completed' | 'cancelled' | 'all';
   hasFollowUp?: boolean;
+  // Campaign filter
+  campaignId?: string;
 };
 
 export type LeadsResponse = {

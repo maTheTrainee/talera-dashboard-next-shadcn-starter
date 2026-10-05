@@ -46,6 +46,7 @@ const mockLeads: Lead[] = [
     campaignId: 'camp-1',
     campaignName: 'Q4 Avtalssättning - Säkerhetsbolag',
     followUpAt: '2026-10-10T10:00:00Z',
+    followUpDateTime: '2026-10-10T10:00:00Z',
     followUpStatus: 'pending',
     followUpNotes: 'Bokat möte - skicka bekräftelse'
   },
@@ -63,6 +64,7 @@ const mockLeads: Lead[] = [
     campaignId: 'camp-1',
     campaignName: 'Q4 Avtalssättning - Säkerhetsbolag',
     followUpAt: '2026-10-07T14:00:00Z',
+    followUpDateTime: '2026-10-07T14:00:00Z',
     followUpStatus: 'pending',
     followUpNotes: 'Ring tillbaka nästa vecka'
   },
@@ -138,6 +140,7 @@ const mockLeads: Lead[] = [
     campaignId: 'camp-2',
     campaignName: 'Support AI - Inkommande',
     followUpAt: '2026-10-08T11:00:00Z',
+    followUpDateTime: '2026-10-08T11:00:00Z',
     followUpStatus: 'pending',
     followUpNotes: 'Uppföljning enterprise-lösning'
   },
@@ -169,6 +172,7 @@ const mockLeads: Lead[] = [
     campaignId: 'camp-1',
     campaignName: 'Q4 Avtalssättning - Säkerhetsbolag',
     followUpAt: '2026-10-11T14:00:00Z',
+    followUpDateTime: '2026-10-11T14:00:00Z',
     followUpStatus: 'pending',
     followUpNotes: 'Demo AI-agent för support'
   },
@@ -198,6 +202,9 @@ export async function getLeads(filters: LeadFilters): Promise<LeadsResponse> {
   }
   if (filters.campaignType) {
     leads = leads.filter((l) => l.campaignType === filters.campaignType);
+  }
+  if (filters.campaignId) {
+    leads = leads.filter((l) => l.campaignId === filters.campaignId);
   }
   if (filters.search) {
     const search = filters.search.toLowerCase();

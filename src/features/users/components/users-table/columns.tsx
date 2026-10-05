@@ -102,6 +102,23 @@ export const leadColumns = () => {
       enableColumnFilter: true
     },
     {
+      accessorKey: 'campaignId',
+      header: ({ column }: { column: Column<Lead, unknown> }) => (
+        <DataTableColumnHeader column={column} title='Kampanj ID' />
+      ),
+      cell: ({ cell }) => (
+        <div className='max-w-[150px] truncate text-xs text-muted-foreground font-mono'>
+          {cell.getValue<Lead['campaignId']>() ?? '—'}
+        </div>
+      ),
+      meta: {
+        label: 'Kampanj ID',
+        variant: 'text' as const,
+        icon: Icons.hash
+      },
+      enableColumnFilter: true
+    },
+    {
       id: 'status',
       accessorKey: 'status',
       enableSorting: false,
@@ -137,9 +154,10 @@ export const leadColumns = () => {
       ),
       cell: ({ cell }) => {
         const followUpAt = cell.row.original.followUpAt;
+        const followUpDateTime = cell.row.original.followUpDateTime;
         const followUpStatus = cell.getValue<Lead['followUpStatus']>();
 
-        if (!followUpAt) {
+        if (!followUpAt && !followUpDateTime) {
           return <span className='text-muted-foreground text-sm'>—</span>;
         }
 
@@ -149,7 +167,9 @@ export const leadColumns = () => {
           variant: 'outline' as const
         };
 
-        const followUpDate = new Date(followUpAt);
+        // Use followUpDateTime if available, otherwise followUpAt
+        const dateTimeToShow = followUpDateTime || followUpAt;
+        const followUpDate = new Date(dateTimeToShow);
         const formattedDate = followUpDate.toLocaleString('sv-SE', {
           day: '2-digit',
           month: '2-digit',
