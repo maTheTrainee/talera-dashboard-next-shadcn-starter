@@ -1,4 +1,5 @@
 'use client';
+
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
 import type { Lead } from '../../api/types';
@@ -47,7 +48,7 @@ const followUpStatusOptions = [
   { value: 'cancelled', label: 'Avbruten' }
 ];
 
-export const leadColumns = () => {
+export function leadColumns() {
   const { t } = useI18n();
 
   return [
@@ -252,4 +253,4 @@ export const leadColumns = () => {
       }
     }
   ] as ColumnDef<Lead>[];
-};
+}

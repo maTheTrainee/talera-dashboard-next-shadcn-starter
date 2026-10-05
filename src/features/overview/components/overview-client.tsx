@@ -1,14 +1,13 @@
 'use client';
 
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { CampaignTypeToggle, useCampaignType, CampaignProvider } from './campaign-toggle';
+import { useCampaignType, CampaignProvider } from './campaign-toggle';
 import { OverviewStats } from './overview-stats';
 import { OverviewAreaChart } from './overview-area-chart';
 import { OverviewBarChart } from './overview-bar-chart';
 import { OverviewPieChart } from './overview-pie-chart';
 import { RecentEvents } from './recent-events';
 import { overviewStatsQueryOptions } from '../api/queries';
-import { useI18n } from '@/lib/i18n';
 import { Suspense } from 'react';
 
 interface OverviewClientProps {
@@ -25,7 +24,6 @@ export function OverviewClient({ campaignType }: OverviewClientProps) {
 
 function OverviewInner() {
   const { campaignType } = useCampaignType();
-  const { t } = useI18n();
   const { data } = useSuspenseQuery(overviewStatsQueryOptions({ campaignType }));
 
   if (!data?.stats) return null;

@@ -42,6 +42,7 @@ export function CampaignStarter() {
   const { organization } = useOrganization();
   const orgId = organization?.id;
 
+  const orgName = organization?.name || '';
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<Array<{ name: string; phone: string }> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +69,12 @@ export function CampaignStarter() {
       }
       setIsSubmitting(true);
       try {
-        const result = await createCampaign({ ...value, organizationId: orgId });
+        const result = await createCampaign({
+          ...value,
+          organizationId: orgId,
+          organizationName: orgName,
+          scheduleDate: value.scheduleDate
+        });
         if (result.success) {
           toast.success(t('campaign.success'));
           bulkForm.reset();
@@ -103,7 +109,11 @@ export function CampaignStarter() {
       }
       setIsQuickDialSubmitting(true);
       try {
-        const result = await quickDial({ ...value, organizationId: orgId });
+        const result = await quickDial({
+          ...value,
+          organizationId: orgId,
+          organizationName: orgName
+        });
         if (result.success) {
           toast.success(result.message);
           quickDialForm.reset();

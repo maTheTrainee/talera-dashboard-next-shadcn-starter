@@ -9,7 +9,6 @@ import { getSortingStateParser } from '@/lib/parsers';
 import { campaignsQueryOptions } from '@/features/campaigns/api/queries';
 import { campaignColumns } from './campaigns-columns';
 import type { CampaignFilters } from '@/features/campaigns/api/types';
-import { cn } from '@/lib/utils';
 
 export function CampaignsTable() {
   const columnIds = campaignColumns()

@@ -8,6 +8,10 @@ import type {
   CSVRow
 } from './types';
 
+// n8n webhook URL from environment variables
+const N8N_WEBHOOK_URL =
+  process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || 'https://yourdomain.se/webhook/campaign';
+
 const mockCampaigns: Campaign[] = [
   {
     id: 'camp-1',
@@ -85,6 +89,56 @@ function generateCSVTemplate(): string {
   return 'name,phone\nErik Andersson,+46 70 123 45 67\nAnna Johansson,+46 73 987 65 43\nLars Nilsson,+46 76 555 12 34\n';
 }
 
+// Type guard for Date objects
+function isDate(value: unknown): value is Date {
+  return value instanceof Date;
+}
+
+// Build the n8n payload with Clerk multi-tenancy anchors
+function buildN8nPayload(
+  data: CampaignMutationPayload & { organizationName?: string; scheduleDate?: string | Date }
+): object {
+  const phoneNumbersArray = data.phoneNumbers.map((p) => p.phone);
+
+  // Handle scheduleDate - could be string or Date
+  let startDateStr: string | undefined;
+  if (data.scheduleDate) {
+    if (isDate(data.scheduleDate)) {
+      startDateStr = data.scheduleDate.toISOString().split('T')[0];
+    } else {
+      startDateStr = data.scheduleDate;
+    }
+  }
+
+  return {
+    clerkOrgId: data.organizationId,
+    organizationName: data.organizationName || '',
+    campaignName: data.name,
+    campaignType: data.type,
+    scheduling: data.scheduleDate
+      ? {
+          startDate: startDateStr,
+          startTime: data.scheduleStartTime || '08:00',
+          endTime: data.scheduleEndTime || '12:00'
+        }
+      : undefined,
+    phoneNumbers: phoneNumbersArray,
+    customerName: null // For bulk CSV, we don't have a single customer name
+  };
+}
+
+function buildQuickDialPayload(data: QuickDialPayload & { organizationName?: string }): object {
+  return {
+    clerkOrgId: data.organizationId,
+    organizationName: data.organizationName || '',
+    campaignName: `Quick Dial - ${data.name}`,
+    campaignType: data.campaignType,
+    scheduling: undefined,
+    phoneNumbers: [data.phone],
+    customerName: data.name
+  };
+}
+
 export async function getCampaigns(filters: CampaignFilters): Promise<CampaignsResponse> {
   await delay(500);
 
@@ -137,44 +191,110 @@ export async function getCampaignById(id: string) {
 }
 
 export async function createCampaign(
-  data: CampaignMutationPayload
-): Promise<{ success: boolean; message: string; campaign?: Campaign }> {
-  await delay(1000);
+  data: CampaignMutationPayload & { organizationName?: string; scheduleDate?: string | Date }
+): Promise<{ success: boolean; message: string; campaign?: Campaign; n8nResponse?: unknown }> {
+  // Build the n8n payload with Clerk organization anchor
+  const n8nPayload = buildN8nPayload(data);
 
-  const newCampaign: Campaign = {
-    id: `camp-${Date.now()}`,
-    name: data.name,
-    type: data.type,
-    status: 'active',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    totalNumbers: data.phoneNumbers.length,
-    calledNumbers: 0,
-    answeredCalls: 0,
-    bookedMeetings: 0,
-    organizationId: data.organizationId
-  };
+  try {
+    // Send to n8n webhook
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(n8nPayload)
+    });
 
-  mockCampaigns.unshift(newCampaign);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('n8n webhook error:', response.status, errorText);
+      throw new Error(`n8n webhook failed: ${response.status} ${response.statusText}`);
+    }
 
-  return {
-    success: true,
-    message: 'Kampanj skapad och skickad till n8n!',
-    campaign: newCampaign
-  };
+    const n8nResult = await response.json();
+
+    // Create local campaign record for immediate UI feedback
+    let scheduleDateStr: string | undefined;
+    if (data.scheduleDate) {
+      if (isDate(data.scheduleDate)) {
+        scheduleDateStr = data.scheduleDate.toISOString().split('T')[0];
+      } else {
+        scheduleDateStr = data.scheduleDate;
+      }
+    }
+
+    const newCampaign: Campaign = {
+      id: `camp-${Date.now()}`,
+      name: data.name,
+      type: data.type,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      totalNumbers: data.phoneNumbers.length,
+      calledNumbers: 0,
+      answeredCalls: 0,
+      bookedMeetings: 0,
+      organizationId: data.organizationId,
+      scheduleStartTime: data.scheduleStartTime,
+      scheduleEndTime: data.scheduleEndTime,
+      scheduleDate: scheduleDateStr,
+      startedAt: new Date().toISOString()
+    };
+
+    mockCampaigns.unshift(newCampaign);
+
+    return {
+      success: true,
+      message: 'Kampanj skapad och skickad till n8n!',
+      campaign: newCampaign,
+      n8nResponse: n8nResult
+    };
+  } catch (error) {
+    console.error('Failed to send campaign to n8n:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Fel vid skickande till n8n'
+    };
+  }
 }
 
 export async function quickDial(
-  data: QuickDialPayload
-): Promise<{ success: boolean; message: string }> {
-  await delay(500);
+  data: QuickDialPayload & { organizationName?: string }
+): Promise<{ success: boolean; message: string; n8nResponse?: unknown }> {
+  // Build the n8n payload with Clerk organization anchor
+  const n8nPayload = buildQuickDialPayload(data);
 
-  console.log('Quick dial sent to n8n:', data);
+  try {
+    // Send to n8n webhook
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(n8nPayload)
+    });
 
-  return {
-    success: true,
-    message: 'Testsamtal initierat!'
-  };
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('n8n webhook error:', response.status, errorText);
+      throw new Error(`n8n webhook failed: ${response.status} ${response.statusText}`);
+    }
+
+    const n8nResult = await response.json();
+
+    return {
+      success: true,
+      message: 'Testsamtal initierat och skickat till n8n!',
+      n8nResponse: n8nResult
+    };
+  } catch (error) {
+    console.error('Failed to send quick dial to n8n:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Fel vid skickande till n8n'
+    };
+  }
 }
 
 export { parseCSV, generateCSVTemplate };
