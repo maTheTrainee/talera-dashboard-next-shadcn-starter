@@ -209,7 +209,9 @@ function TranscriptMessageBubble({ message, index, isFirst }: TranscriptMessageB
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} ${isFirst ? 'mt-4' : ''}`}>
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 transition-colors ${
-          isAI ? 'bg-muted rounded-bl-sm' : 'bg-primary text-primary-foreground rounded-br-sm'
+          isAI
+            ? 'bg-muted/80 text-foreground rounded-bl-sm border border-border/50'
+            : 'bg-primary text-primary-foreground rounded-br-sm'
         } ${isStreaming ? 'ring-2 ring-primary/50' : ''}`}
       >
         <div className='flex items-center gap-2 mb-1'>
