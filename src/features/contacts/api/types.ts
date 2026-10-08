@@ -8,6 +8,8 @@ export interface Contact {
   last_name: string;
   email: string;
   phone: string;
+  /** Företagsnamn — helps operators recall the company behind the contact. */
+  company: string | null;
   status: string;
   call_outcome: string | null;
   /** "Uppföljning 2026-05-03 15:30" — when the agent will call back. */
@@ -36,6 +38,7 @@ export interface ContactsResponse {
 export type ContactMutationPayload = {
   first_name: string;
   last_name: string;
+  company?: string | null;
   email: string;
   phone: string;
   status: string;

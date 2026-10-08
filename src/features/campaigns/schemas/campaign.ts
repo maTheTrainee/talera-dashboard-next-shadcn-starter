@@ -40,11 +40,14 @@ export const campaignBaseSchema = z.object({
   scheduled_end: z.string().min(1, 'Sluttid krävs'),
   outbound_number: z
     .string()
-    .min(8, 'Utgående nummer krävs')
     .refine(
-      (value) => /^\+?[0-9\s\-().]{8,20}$/.test(value),
+      (value) =>
+        value === 'default' ||
+        value === '' ||
+        /^\+?[0-9\s\-().]{8,20}$/.test(value),
       'Ange ett giltigt telefonnummer (t.ex. 07X eller +467X)'
-    ),
+    )
+    .optional(),
   max_attempts: z
     .number({ error: 'Ange ett tal' })
     .min(0, 'Kan inte vara negativt')

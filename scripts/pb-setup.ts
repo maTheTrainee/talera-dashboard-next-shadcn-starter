@@ -231,6 +231,36 @@ if (tierField) {
   }
 }
 
+// 7. Sync the contacts company field (företagsnamn) — adds it to a live
+// collection provisioned before the field existed.
+const contactsCol = await pb.collections.getOne('contacts');
+const contactFieldNames = new Set(
+  contactsCol.fields.map((f: { name: string }) => f.name)
+);
+if (!contactFieldNames.has('company')) {
+  await pb.collections.update('contacts', {
+    fields: [...contactsCol.fields, { name: 'company', type: 'text' }]
+  });
+  console.log('✓ contacts utökad: company');
+} else {
+  console.log('• contacts.company finns redan');
+}
+
+// 8. numbers — the tenant's outbound numbers. The campaign UI locks to
+// "Använd förvalt nummer" when this collection is empty; n8n holds the
+// fallback number for those cases.
+await ensureCollection({
+  name: 'numbers',
+  type: 'base',
+  ...rules,
+  fields: [
+    { name: 'org_id', type: 'text', required: true },
+    { name: 'number', type: 'text', required: true },
+    { name: 'label', type: 'text' }
+  ],
+  indexes: ['CREATE INDEX idx_numbers_org ON numbers (org_id)']
+});
+
 console.log('');
 console.log('✓ KLAR — datatabeller + behörigheter (superuser-only) provisionerade.');
 console.log('  Nästa steg: skapa din users-rad i admin-UI med clerk_org_id + subscription_tier.');

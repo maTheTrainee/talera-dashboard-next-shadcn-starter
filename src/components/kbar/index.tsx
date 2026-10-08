@@ -31,7 +31,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
               shortcut: navItem.shortcut,
               keywords: navItem.title.toLowerCase(),
               section: 'Navigation',
-              subtitle: `Go to ${navItem.title}`,
+              subtitle: `Öppna ${navItem.title}`,
               perform: () => navigateTo(navItem.url)
             }
           : null;
@@ -44,7 +44,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
           shortcut: childItem.shortcut,
           keywords: childItem.title.toLowerCase(),
           section: navItem.title,
-          subtitle: `Go to ${childItem.title}`,
+          subtitle: `Öppna ${childItem.title}`,
           perform: () => navigateTo(childItem.url)
         })) ?? [];
 
@@ -68,7 +68,10 @@ const KBarComponent = ({ children }: { children: React.ReactNode }) => {
         <KBarPositioner className='bg-black/10 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 z-99999 flex items-start! justify-center p-4! pt-[14vh]!'>
           <KBarAnimator className='bg-popover text-popover-foreground ring-foreground/10 relative mx-auto w-full max-w-[600px] overflow-hidden rounded-xl shadow-lg ring-1'>
             <div className='bg-popover sticky top-0 z-10 border-b'>
-              <KBarSearch className='placeholder:text-muted-foreground w-full border-none bg-transparent px-4 py-3.5 text-sm outline-hidden focus:ring-0 focus:outline-hidden' />
+          <KBarSearch
+          className='placeholder:text-muted-foreground w-full border-none bg-transparent px-4 py-3.5 text-sm outline-hidden focus:ring-0 focus:outline-hidden'
+          placeholder='Sök eller skriv ett kommando…'
+        />
             </div>
             <div className='h-[400px]'>
               <RenderResults />

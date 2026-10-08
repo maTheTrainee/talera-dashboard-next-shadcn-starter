@@ -23,14 +23,14 @@ type NotificationState = {
 const mockNotifications: Notification[] = [
   {
     id: '1',
-    title: 'New team member joined',
-    body: 'Sarah Connor has joined the Engineering workspace.',
+    title: '🎉 Nytt möte bokat!',
+    body: 'AI-agenten bokade ett möte med Anna Andersson (Acme AB) — torsdag 14:00.',
     status: 'unread',
     createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     actions: [
       {
         id: 'view',
-        label: 'View workspace',
+        label: 'Visa kontakt',
         type: 'redirect',
         style: 'primary'
       }
@@ -38,14 +38,14 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '2',
-    title: 'New product added',
-    body: 'A new product "Dashboard Pro" has been added to the catalog.',
+    title: '✅ Kvalificerad prospekt',
+    body: 'Erik Svensson (Nordica AB) kvalificerades som prospekt efter samtalet.',
     status: 'unread',
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     actions: [
       {
         id: 'view-product',
-        label: 'View products',
+        label: 'Visa kontaktlista',
         type: 'redirect',
         style: 'primary'
       }
@@ -53,14 +53,14 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '3',
-    title: 'Billing cycle updated',
-    body: 'Your Pro plan has been renewed. Next invoice on April 24, 2026.',
+    title: '📅 Uppföljning bokad',
+    body: 'Uppföljning med Maria Larsson bokad till kl 15:30.',
     status: 'unread',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     actions: [
       {
         id: 'billing',
-        label: 'View billing',
+        label: 'Visa Realtidsvy',
         type: 'redirect',
         style: 'primary'
       }
@@ -68,14 +68,14 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '4',
-    title: 'Task assigned to you',
-    body: 'You have been assigned "Update dashboard analytics" on the Kanban board.',
+    title: '🚀 Kampanj startad',
+    body: 'Kampanjen "Q1 Försäljning" har startat och ringer enligt schemat.',
     status: 'read',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     actions: [
       {
         id: 'open',
-        label: 'Open kanban',
+        label: 'Öppna Realtidsvy',
         type: 'redirect',
         style: 'primary'
       }
@@ -83,14 +83,14 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '5',
-    title: 'New message from Alex',
-    body: 'Alex sent you a message: "Hey, can we sync on the overview dashboard?"',
+    title: '⚠️ Minutpoolen nästan slut',
+    body: 'Överförbrukning aktiveras automatiskt (5,90 kr/min exkl. moms) när poolen tar slut.',
     status: 'read',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     actions: [
       {
         id: 'open-chat',
-        label: 'Open chat',
+        label: 'Visa Översikt',
         type: 'redirect',
         style: 'primary'
       }

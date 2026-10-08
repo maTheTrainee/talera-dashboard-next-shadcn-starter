@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { revalidateLogic, useStore } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -24,6 +24,7 @@ import { LoadingButton } from '@/components/ui/loading-button';
 import { Separator } from '@/components/ui/separator';
 import { CsvTemplateButton } from '@/components/csv-template-button';
 import { createCampaignMutation } from '../api/mutations';
+import { tenantNumbersQueryOptions } from '../api/queries';
 import {
   campaignBaseSchema,
   campaignSchema,
@@ -79,7 +80,7 @@ function ReviewSummary({
     description: string;
     scheduled_start: string;
     scheduled_end: string;
-    outbound_number: string;
+    outbound_number?: string;
     max_attempts?: number;
     csv_file?: File[];
   };
@@ -109,7 +110,9 @@ function ReviewSummary({
             Utgående nummer
           </p>
           <p className='text-sm'>
-            {values.outbound_number ? normalizePhoneNumber(values.outbound_number) : '—'}
+            {values.outbound_number && values.outbound_number !== 'default'
+              ? normalizePhoneNumber(values.outbound_number)
+              : 'Förvalt nummer (n8n väljer)'}
           </p>
         </div>
         <div>
@@ -142,7 +145,7 @@ type WizardFormValues = {
   description: string;
   scheduled_start: string;
   scheduled_end: string;
-  outbound_number: string;
+  outbound_number?: string;
   max_attempts?: number;
   csv_file?: File[];
 };
@@ -175,7 +178,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
       description: '',
       scheduled_start: '',
       scheduled_end: '',
-      outbound_number: '',
+      outbound_number: 'default',
       max_attempts: 3,
       csv_file: []
     } as WizardFormValues,
@@ -190,7 +193,10 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
         description: value.description,
         scheduled_start: value.scheduled_start,
         scheduled_end: value.scheduled_end,
-        outbound_number: normalizePhoneNumber(value.outbound_number),
+        outbound_number:
+          value.outbound_number === 'default' || !value.outbound_number
+            ? null
+            : normalizePhoneNumber(value.outbound_number),
         max_attempts: value.max_attempts ?? 3
       });
     }
@@ -198,6 +204,20 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
 
   const isDefault = useStore(form.store, (state) => state.isDefaultValue);
   const formValues = useStore(form.store, (state) => state.values) as WizardFormValues;
+
+  // Tenant numbers — the dropdown lists the org's numbers; with none in the
+  // database the select locks to "Använd förvalt nummer" (n8n fallback).
+  const { data: numbersData } = useQuery({
+    ...tenantNumbersQueryOptions(),
+    placeholderData: (prev) => prev
+  });
+  const numberOptions = [
+    { value: 'default', label: 'Använd förvalt nummer' },
+    ...(numbersData?.items ?? []).map((n) => ({
+      value: n.number,
+      label: n.label ? `${n.label} · ${n.number}` : n.number
+    }))
+  ];
 
   const handleNext = async () => {
     await handleNextStepOrSubmit(form);
@@ -298,11 +318,11 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                 <form.AppField
                   name='outbound_number'
                   children={(field) => (
-                    <field.TextField
+                    <field.SelectField
                       label='Utgående nummer'
-                      required
-                      type='tel'
-                      placeholder='07X XXX XX XX'
+                      options={numberOptions}
+                      placeholder='Använd förvalt nummer'
+                      description='Väljer du inget nummer används n8n:s förvalda fallback-nummer.'
                     />
                   )}
                 />
@@ -339,6 +359,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                     <field.FileUploadField
                       label='Kontaktlista (CSV)'
                       description='Dra & släpp eller klicka för att ladda upp (max 5MB, .csv)'
+                      accept={{ 'text/csv': ['.csv'] }}
                       maxSize={5000000}
                       maxFiles={1}
                     />

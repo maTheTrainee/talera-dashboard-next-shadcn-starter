@@ -33,7 +33,15 @@ export const columns: ColumnDef<Campaign>[] = [
     accessorKey: 'outbound_number',
     header: ({ column }: { column: Column<Campaign, unknown> }) => (
       <DataTableColumnHeader column={column} title='Utgående nummer' />
-    )
+    ),
+    cell: ({ cell }) => {
+      const number = cell.getValue<Campaign['outbound_number']>();
+      return (
+        <span className='text-muted-foreground text-sm'>
+          {number ?? 'Förvalt (n8n)'}
+        </span>
+      );
+    }
   },
   {
     id: 'prospect_count',

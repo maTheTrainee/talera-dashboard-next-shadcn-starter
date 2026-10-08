@@ -3,16 +3,19 @@
 import { FileUploader } from '@/components/file-uploader';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { useFieldContext, useFieldInvalid, type BaseFieldProps } from '@/lib/form-context';
+import type { DropzoneProps } from 'react-dropzone';
 
 export function FileUploadField({
   label,
   description,
   required,
   maxSize = 5 * 1024 * 1024,
-  maxFiles = 1
+  maxFiles = 1,
+  accept
 }: BaseFieldProps & {
   maxSize?: number;
   maxFiles?: number;
+  accept?: DropzoneProps['accept'];
 }) {
   const field = useFieldContext<File[] | undefined>();
   const isInvalid = useFieldInvalid();
@@ -28,6 +31,7 @@ export function FileUploadField({
         onValueChange={(files) =>
           field.handleChange(typeof files === 'function' ? files(field.state.value ?? []) : files)
         }
+        accept={accept}
         maxSize={maxSize}
         maxFiles={maxFiles}
       />

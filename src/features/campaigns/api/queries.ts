@@ -1,11 +1,15 @@
 import { queryOptions } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
 import {
   getCampaigns,
   getCampaignById,
   getCampaignProspects,
   getCallById
 } from './service';
-import type { CampaignFilters } from './types';
+import type {
+  CampaignFilters,
+  TenantNumbersResponse
+} from './types';
 
 export const campaignKeys = {
   all: ['campaigns'] as const,
@@ -41,4 +45,11 @@ export const campaignCallOptions = (callId: string) =>
   queryOptions({
     queryKey: campaignKeys.call(callId),
     queryFn: () => getCallById(callId)
+  });
+
+export const tenantNumbersQueryOptions = () =>
+  queryOptions({
+    queryKey: ['numbers', 'tenant'] as const,
+    queryFn: () => apiClient<TenantNumbersResponse>('/numbers'),
+    staleTime: 300_000
   });

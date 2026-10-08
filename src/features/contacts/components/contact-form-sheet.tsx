@@ -58,6 +58,7 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
     defaultValues: {
       first_name: contact?.first_name ?? '',
       last_name: contact?.last_name ?? '',
+      company: contact?.company ?? '',
       email: contact?.email ?? '',
       phone: contact?.phone ?? '',
       status: contact?.status ?? 'ny',
@@ -120,6 +121,13 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
                   )}
                 />
               </div>
+
+              <form.AppField
+                name='company'
+                children={(field) => (
+                  <field.TextField label='Företag' placeholder='Acme AB' />
+                )}
+              />
 
               <form.AppField
                 name='email'

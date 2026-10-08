@@ -14,8 +14,9 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createCampaignMutation, updateCampaignMutation } from '../api/mutations';
+import { tenantNumbersQueryOptions } from '../api/queries';
 import type { Campaign } from '../api/types';
 import { toast } from 'sonner';
 import {
@@ -59,7 +60,7 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
       description: campaign?.description ?? '',
       scheduled_start: campaign?.scheduled_start?.slice(0, 16) ?? '',
       scheduled_end: campaign?.scheduled_end?.slice(0, 16) ?? '',
-      outbound_number: campaign?.outbound_number ?? '',
+      outbound_number: campaign?.outbound_number ?? 'default',
       max_attempts: campaign?.max_attempts ?? 3
     } as CampaignFormValues,
     validators: {
@@ -68,7 +69,10 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
     onSubmit: async ({ value }) => {
       const values = {
         ...value,
-        outbound_number: normalizePhoneNumber(value.outbound_number)
+        outbound_number:
+          value.outbound_number === 'default' || !value.outbound_number
+            ? null
+            : normalizePhoneNumber(value.outbound_number)
       };
       if (isEdit) {
         await updateMutation.mutateAsync({ id: campaign.id, values });
@@ -77,6 +81,20 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
       }
     }
   });
+
+  // Tenant numbers — the dropdown lists the org's numbers; with none in the
+  // database the select locks to "Använd förvalt nummer" (n8n fallback).
+  const { data: numbersData } = useQuery({
+    ...tenantNumbersQueryOptions(),
+    placeholderData: (prev) => prev
+  });
+  const numberOptions = [
+    { value: 'default', label: 'Använd förvalt nummer' },
+    ...(numbersData?.items ?? []).map((n) => ({
+      value: n.number,
+      label: n.label ? `${n.label} · ${n.number}` : n.number
+    }))
+  ];
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -144,11 +162,11 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
               <form.AppField
                 name='outbound_number'
                 children={(field) => (
-                  <field.TextField
+                  <field.SelectField
                     label='Utgående nummer'
-                    required
-                    type='tel'
-                    placeholder='07X XXX XX XX (normaliseras till +467X)'
+                    options={numberOptions}
+                    placeholder='Använd förvalt nummer'
+                    description='Väljer du inget nummer används n8n:s förvalda fallback-nummer.'
                   />
                 )}
               />

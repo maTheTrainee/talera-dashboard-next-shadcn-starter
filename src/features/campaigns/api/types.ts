@@ -21,8 +21,8 @@ export interface Campaign {
   scheduled_end: string;
   /** n8n owns the agent mapping at dial-time — this field is an n8n-written audit value, never user-facing. */
   uv_agent_id: string;
-  /** E.164 — regex-cleaned on input (07X → +467X). */
-  outbound_number: string;
+  /** E.164 — regex-cleaned on input (07X → +467X). null = "Använd förvalt nummer" (n8n fallback). */
+  outbound_number: string | null;
   /** Anti-spam cap: the engine stops dialing at this many attempts without a booked follow-up. 0 = unlimited. */
   max_attempts: number | null;
   /** Count of prospects locked into the campaign (computed by the API). */
@@ -43,6 +43,8 @@ export interface CampaignProspect {
   phone: string;
   status: ProspectStatus;
   call_outcome: string | null;
+  /** Företagsnamn — helps operators recall the company behind the contact. */
+  company: string | null;
   /** "Uppföljning 2026-05-03 15:30" — when the agent will call back. */
   follow_up_at: string | null;
   /** Every dial attempt (n8n-maintained, read-only from the app). */
@@ -91,10 +93,23 @@ export type CampaignMutationPayload = {
   description: string;
   scheduled_start: string;
   scheduled_end: string;
-  outbound_number: string;
+  /** null = "Använd förvalt nummer" — n8n's fallback number applies. */
+  outbound_number?: string | null;
   /** Anti-spam cap: 0 = unlimited (default 3). */
   max_attempts?: number | null;
 };
+
+export interface TenantNumber {
+  id: string;
+  org_id: string;
+  number: string;
+  label: string | null;
+}
+
+export interface TenantNumbersResponse {
+  items: TenantNumber[];
+  total_items: number;
+}
 
 export type CampaignUpdatePayload = Partial<CampaignMutationPayload> & {
   status?: CampaignStatus;

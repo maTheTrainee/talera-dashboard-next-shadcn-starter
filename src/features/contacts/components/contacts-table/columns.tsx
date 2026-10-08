@@ -18,6 +18,9 @@ export const columns: ColumnDef<Contact>[] = [
         <span className='font-medium'>
           {row.original.first_name} {row.original.last_name}
         </span>
+        {row.original.company && (
+          <span className='text-muted-foreground text-xs'>{row.original.company}</span>
+        )}
         <span className='text-muted-foreground text-xs'>{row.original.email}</span>
       </div>
     ),

@@ -66,7 +66,7 @@ export function PieGraph() {
           className='[&_.recharts-text]:fill-background mx-auto aspect-square max-h-[300px] min-h-[250px]'
         >
           <PieChart>
-            <ChartTooltip content={<ChartTooltipContent nameKey='antal' hideLabel />} />
+            <ChartTooltip content={<ChartTooltipContent labelKey='outcome' nameKey='antal' />} />
             <Pie
               data={chartData}
               innerRadius={30}

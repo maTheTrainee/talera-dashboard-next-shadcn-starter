@@ -16,6 +16,7 @@ export const contactSchema = z
   .object({
     first_name: z.string().min(2, 'Förnamn måste vara minst 2 tecken'),
     last_name: z.string().min(2, 'Efternamn måste vara minst 2 tecken'),
+    company: z.string().optional(),
     email: z.email('Ange en giltig e-postadress').or(z.literal('')),
     phone: z
       .string()
