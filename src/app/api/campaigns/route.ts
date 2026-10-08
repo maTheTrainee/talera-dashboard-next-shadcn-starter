@@ -84,26 +84,29 @@ export async function POST(request: NextRequest) {
     // Tenant + package gate: inbound packages (Receptionist / AI-Assistent)
     // get no campaign creation.
     const tenant = await getTenantMetadata(orgId);
-    if (!canCreateCampaigns(tenant.subscription_tier)) {
+    if (!canCreateCampaigns(tenant.subscription_tiers)) {
       return NextResponse.json(
         { error: 'Erbjudandet omfattar inte utgående kampanjer.' },
         { status: 403 }
       );
     }
 
-    // Tier gating — plan limits come from the tenant metadata (ENTERPRISE is
-    // quote-based and never hard-limited in code).
-    const tier = getTierDefinition(tenant.subscription_tier);
+    // Tier gating — plan limits come from the tenant metadata (offert tiers
+    // are never hard-limited in code).
+    const outboundTiers = tenant.subscription_tiers
+      .map((t) => getTierDefinition(t))
+      .filter((t) => t.capabilities.outbound);
+    const quoteBased = outboundTiers.some((t) => t.quoteBased);
 
-    if (!tier.quoteBased) {
+    if (!quoteBased) {
       const existing = await pb.collection('campaigns').getList(1, 1, {
         filter: pb.filter('org_id = {:orgId}', { orgId })
       });
-      const max = tier.maxCampaigns ?? 1;
+      const max = Math.max(...outboundTiers.map((t) => t.maxCampaigns ?? 0), 1);
       if (existing.totalItems >= max) {
         return NextResponse.json(
           {
-            error: `Planen ${tier.label} tillåter max ${max} kampanjer. Uppgradera för fler.`
+            error: `Paketen tillåter max ${max} kampanjer. Uppgradera för fler.`
           },
           { status: 402 }
         );

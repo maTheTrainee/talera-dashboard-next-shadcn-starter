@@ -200,8 +200,16 @@ const additions = [
   {
     name: 'subscription_tier',
     type: 'select',
-    maxSelect: 1,
-    values: ['DELTID', 'HELTID', 'TEAM', 'ENTERPRISE', 'RECEPTIONIST', 'AI_ASSISTENT']
+    maxSelect: 7,
+    values: [
+      'DELTID',
+      'HELTID',
+      'TEAM',
+      'ENTERPRISE',
+      'RECEPTIONIST',
+      'RECEPTIONIST_BOOKER',
+      'AI_ASSISTENT'
+    ]
   },
   { name: 'pb_container_id', type: 'text' }
 ].filter((f) => !existing.has(f.name));
@@ -213,37 +221,79 @@ if (additions.length > 0) {
   console.log('• users redan utökad — hoppar över');
 }
 
-// 6. Sync the subscription_tier select values (adds the inbound packages to a
-// live collection that already carries the field with the old value set).
+// 6. Sync the subscription_tier field (adds the inbound packages + makes it
+// multi-select so one tenant can hold several packages).
 const tierField = users.fields.find((f: { name: string }) => f.name === 'subscription_tier');
-const wantedTiers = ['DELTID', 'HELTID', 'TEAM', 'ENTERPRISE', 'RECEPTIONIST', 'AI_ASSISTENT'];
+const wantedTiers = [
+  'DELTID',
+  'HELTID',
+  'TEAM',
+  'ENTERPRISE',
+  'RECEPTIONIST',
+  'RECEPTIONIST_BOOKER',
+  'AI_ASSISTENT'
+];
 if (tierField) {
   const current: string[] = tierField.values ?? [];
   const missing = wantedTiers.filter((v) => !current.includes(v));
-  if (missing.length > 0) {
+  const needsMultiSelect = (tierField.maxSelect ?? 1) < wantedTiers.length;
+  if (missing.length > 0 || needsMultiSelect) {
     const updatedFields = users.fields.map((f: { name: string }) =>
-      f.name === 'subscription_tier' ? { ...f, values: [...current, ...missing] } : f
+      f.name === 'subscription_tier'
+        ? { ...f, values: [...current, ...missing], maxSelect: 7 }
+        : f
     );
     await pb.collections.update('users', { fields: updatedFields });
-    console.log(`✓ users.subscription_tier utökad: ${missing.join(', ')}`);
+    console.log(
+      `✓ users.subscription_tier uppdaterad: multi-select${
+        missing.length > 0 ? ` + ${missing.join(', ')}` : ''
+      }`
+    );
   } else {
     console.log('• users.subscription_tier redan uppdaterad');
   }
 }
 
-// 7. Sync the contacts company field (företagsnamn) — adds it to a live
-// collection provisioned before the field existed.
+// 7. Sync the contacts fields added after initial provisioning (företagsnamn +
+// organisationsnummer) — adds them to a live collection that lacks them.
 const contactsCol = await pb.collections.getOne('contacts');
 const contactFieldNames = new Set(
   contactsCol.fields.map((f: { name: string }) => f.name)
 );
-if (!contactFieldNames.has('company')) {
+const contactAdditions = [
+  { name: 'company', type: 'text' },
+  { name: 'org_number', type: 'text' }
+].filter((f) => !contactFieldNames.has(f.name));
+if (contactAdditions.length > 0) {
   await pb.collections.update('contacts', {
-    fields: [...contactsCol.fields, { name: 'company', type: 'text' }]
+    fields: [...contactsCol.fields, ...contactAdditions]
   });
-  console.log('✓ contacts utökad: company');
+  console.log(
+    `✓ contacts utökad: ${contactAdditions.map((f) => f.name).join(', ')}`
+  );
 } else {
-  console.log('• contacts.company finns redan');
+  console.log('• contacts.company/org_number finns redan');
+}
+
+// 8. calls — sync the call_type field (utgående/inkommande/intern) for the
+// unified samtalshistorik across product lines.
+const callsCol = await pb.collections.getOne('calls');
+const callFieldNames = new Set(callsCol.fields.map((f: { name: string }) => f.name));
+if (!callFieldNames.has('call_type')) {
+  await pb.collections.update('calls', {
+    fields: [
+      ...callsCol.fields,
+      {
+        name: 'call_type',
+        type: 'select',
+        maxSelect: 1,
+        values: ['utgående', 'inkommande', 'intern']
+      }
+    ]
+  });
+  console.log('✓ calls utökad: call_type');
+} else {
+  console.log('• calls.call_type finns redan');
 }
 
 // 8. numbers — the tenant's outbound numbers. The campaign UI locks to

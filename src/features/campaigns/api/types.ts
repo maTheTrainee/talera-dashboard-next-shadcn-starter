@@ -45,6 +45,8 @@ export interface CampaignProspect {
   call_outcome: string | null;
   /** Företagsnamn — helps operators recall the company behind the contact. */
   company: string | null;
+  /** Organisationsnummer — the Swedish company identification number. */
+  org_number: string | null;
   /** "Uppföljning 2026-05-03 15:30" — when the agent will call back. */
   follow_up_at: string | null;
   /** Every dial attempt (n8n-maintained, read-only from the app). */

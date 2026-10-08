@@ -9,9 +9,9 @@ import { Icons } from '@/components/icons';
  * wizard's dropzone step (preserved stepper/dropzone atoms).
  */
 const CSV_TEMPLATE = [
-  'first_name;last_name;company;email;phone',
-  'Anna;Andersson;Acme AB;anna@acme.se;0701234567',
-  'Erik;Svensson;Nordica AB;erik@nordica.se;0739876543'
+  'first_name;last_name;company;org_number;email;phone',
+  'Anna;Andersson;Acme AB;556123-4567;anna@acme.se;0701234567',
+  'Erik;Svensson;Nordica AB;556987-1234;erik@nordica.se;0739876543'
 ].join('\n');
 
 export function CsvTemplateButton() {

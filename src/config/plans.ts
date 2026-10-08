@@ -11,6 +11,8 @@ import type { SubscriptionTier } from '@/types/tenant';
 
 export type ProductLine = 'outbound' | 'inbound';
 
+export type Capability = 'outbound' | 'inbound' | 'booking' | 'internal';
+
 export interface TierDefinition {
   tier: SubscriptionTier;
   label: string;
@@ -23,6 +25,8 @@ export interface TierDefinition {
   maxNumbers: number | null;
   /** Quote-based tiers are never hard-limited in code. */
   quoteBased: boolean;
+  /** What the dashboard shows + what the engine enforces per package. */
+  capabilities: Record<Capability, boolean>;
 }
 
 export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
@@ -36,7 +40,8 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
     maxAgents: 1,
     maxCampaigns: 1,
     maxNumbers: 1,
-    quoteBased: false
+    quoteBased: false,
+    capabilities: { outbound: true, inbound: false, booking: true, internal: false }
   },
   HELTID: {
     tier: 'HELTID',
@@ -48,7 +53,8 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
     maxAgents: 1,
     maxCampaigns: 1,
     maxNumbers: 1,
-    quoteBased: false
+    quoteBased: false,
+    capabilities: { outbound: true, inbound: false, booking: true, internal: false }
   },
   TEAM: {
     tier: 'TEAM',
@@ -60,7 +66,8 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
     maxAgents: 2,
     maxCampaigns: 2,
     maxNumbers: 2,
-    quoteBased: false
+    quoteBased: false,
+    capabilities: { outbound: true, inbound: false, booking: true, internal: false }
   },
   ENTERPRISE: {
     tier: 'ENTERPRISE',
@@ -71,7 +78,8 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
     maxAgents: null,
     maxCampaigns: null,
     maxNumbers: null,
-    quoteBased: true
+    quoteBased: true,
+    capabilities: { outbound: true, inbound: false, booking: true, internal: false }
   },
   RECEPTIONIST: {
     tier: 'RECEPTIONIST',
@@ -82,7 +90,20 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
     maxAgents: null,
     maxCampaigns: null,
     maxNumbers: null,
-    quoteBased: true
+    quoteBased: true,
+    capabilities: { outbound: false, inbound: true, booking: false, internal: false }
+  },
+  RECEPTIONIST_BOOKER: {
+    tier: 'RECEPTIONIST_BOOKER',
+    label: 'Receptionist Bokning',
+    productLine: 'inbound',
+    priceSekPerMonth: null,
+    minutePool: null,
+    maxAgents: null,
+    maxCampaigns: null,
+    maxNumbers: null,
+    quoteBased: true,
+    capabilities: { outbound: false, inbound: true, booking: true, internal: false }
   },
   AI_ASSISTENT: {
     tier: 'AI_ASSISTENT',
@@ -93,7 +114,8 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
     maxAgents: null,
     maxCampaigns: null,
     maxNumbers: null,
-    quoteBased: true
+    quoteBased: true,
+    capabilities: { outbound: false, inbound: false, booking: false, internal: true }
   }
 };
 
@@ -125,7 +147,28 @@ export function computeOverage(minutesUsed: number, tier: TierDefinition): Overa
   return { overageMinutes, liabilitySek };
 }
 
+export interface TenantCapabilities {
+  outbound: boolean;
+  inbound: boolean;
+  booking: boolean;
+  internal: boolean;
+}
+
+/** Aggregates the tenant's packages into the capability flags the dashboard renders. */
+export function getCapabilities(
+  tiers: string | string[] | undefined | null
+): TenantCapabilities {
+  const list = Array.isArray(tiers) ? tiers : tiers ? [tiers] : [];
+  const defs = list.map((t) => getTierDefinition(t));
+  return {
+    outbound: defs.some((t) => t.capabilities.outbound),
+    inbound: defs.some((t) => t.capabilities.inbound),
+    booking: defs.some((t) => t.capabilities.booking),
+    internal: defs.some((t) => t.capabilities.internal)
+  };
+}
+
 /** Inbound packages (Receptionist / AI-Assistent) get no campaign creation. */
-export function canCreateCampaigns(tier: string | undefined | null): boolean {
-  return getTierDefinition(tier).productLine === 'outbound';
+export function canCreateCampaigns(tiers: string | string[] | undefined | null): boolean {
+  return getCapabilities(tiers).outbound;
 }

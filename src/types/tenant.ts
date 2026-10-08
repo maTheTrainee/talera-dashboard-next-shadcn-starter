@@ -14,6 +14,7 @@ export type SubscriptionTier =
   | 'TEAM'
   | 'ENTERPRISE'
   | 'RECEPTIONIST'
+  | 'RECEPTIONIST_BOOKER'
   | 'AI_ASSISTENT';
 
 export type N8nAction = 'start.web.session' | 'start.batch.campaign';
@@ -21,7 +22,8 @@ export type N8nAction = 'start.web.session' | 'start.batch.campaign';
 export interface TenantMetadata {
   /** Verified Clerk organization id — never taken from client input. */
   orgId: string;
-  subscription_tier: SubscriptionTier;
+  /** The tenant's packages (multi-select in the PB users collection). */
+  subscription_tiers: SubscriptionTier[];
   pocketbase_container: string;
 }
 

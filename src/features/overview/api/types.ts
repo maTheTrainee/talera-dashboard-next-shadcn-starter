@@ -1,7 +1,12 @@
 export interface UsageResponse {
-  tier: string;
-  tierLabel: string;
-  productLine: string;
+  tiers: string[];
+  tierLabels: string[];
+  capabilities: {
+    outbound: boolean;
+    inbound: boolean;
+    booking: boolean;
+    internal: boolean;
+  };
   /** null = offert only — no hard limit. */
   minutePool: number | null;
   minutesUsed: number;

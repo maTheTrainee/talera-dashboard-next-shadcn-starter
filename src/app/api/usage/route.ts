@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { computeOverage, getTierDefinition, OVERAGE_RATE_SEK_PER_MIN } from '@/config/plans';
+import {
+  computeOverage,
+  getCapabilities,
+  getTierDefinition,
+  OVERAGE_RATE_SEK_PER_MIN
+} from '@/config/plans';
 import { requireAuthContext } from '@/lib/api-auth';
 import { ensurePbAuth, getTenantMetadata } from '@/lib/pb';
 
@@ -15,7 +20,14 @@ export async function GET() {
   const { orgId } = guard.ctx;
 
   const tenant = await getTenantMetadata(orgId);
-  const tier = getTierDefinition(tenant.subscription_tier);
+  const capabilities = getCapabilities(tenant.subscription_tiers);
+  const tierDefs = tenant.subscription_tiers.map((t) => getTierDefinition(t));
+  const outboundTiers = tierDefs.filter((t) => t.capabilities.outbound);
+  // Pool model: the tenant's outbound packages share the largest pool.
+  const pool =
+    outboundTiers.length > 0
+      ? Math.max(...outboundTiers.map((t) => t.minutePool ?? 0))
+      : null;
 
   let minutesUsed = 0;
   try {
@@ -38,13 +50,15 @@ export async function GET() {
     // usage_daily not provisioned yet — report zeros so the UI still renders.
   }
 
-  const overage = computeOverage(minutesUsed, tier);
-  const pool = tier.minutePool;
+  const overage = computeOverage(minutesUsed, {
+    ...outboundTiers[0] ?? getTierDefinition('DELTID'),
+    minutePool: pool
+  });
 
   return NextResponse.json({
-    tier: tenant.subscription_tier,
-    tierLabel: tier.label,
-    productLine: tier.productLine,
+    tiers: tenant.subscription_tiers,
+    tierLabels: tenant.subscription_tiers.map((t) => getTierDefinition(t).label),
+    capabilities,
     minutePool: pool,
     minutesUsed,
     minutesRemaining: pool == null ? null : Math.max(0, pool - minutesUsed),

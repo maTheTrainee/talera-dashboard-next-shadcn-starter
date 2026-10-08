@@ -10,6 +10,8 @@ export interface Contact {
   phone: string;
   /** Företagsnamn — helps operators recall the company behind the contact. */
   company: string | null;
+  /** Organisationsnummer — the Swedish company identification number. */
+  org_number: string | null;
   status: string;
   call_outcome: string | null;
   /** "Uppföljning 2026-05-03 15:30" — when the agent will call back. */
@@ -39,6 +41,7 @@ export type ContactMutationPayload = {
   first_name: string;
   last_name: string;
   company?: string | null;
+  org_number?: string | null;
   email: string;
   phone: string;
   status: string;

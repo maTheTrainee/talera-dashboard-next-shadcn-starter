@@ -17,6 +17,13 @@ export const contactSchema = z
     first_name: z.string().min(2, 'Förnamn måste vara minst 2 tecken'),
     last_name: z.string().min(2, 'Efternamn måste vara minst 2 tecken'),
     company: z.string().optional(),
+    org_number: z
+      .string()
+      .refine(
+        (value) => !value || /^\d{6}-?\d{4}$/.test(value.replace(/\s/g, '')),
+        'Ange ett giltigt organisationsnummer (t.ex. 556123-4567)'
+      )
+      .optional(),
     email: z.email('Ange en giltig e-postadress').or(z.literal('')),
     phone: z
       .string()

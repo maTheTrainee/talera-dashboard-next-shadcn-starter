@@ -59,6 +59,7 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
       first_name: contact?.first_name ?? '',
       last_name: contact?.last_name ?? '',
       company: contact?.company ?? '',
+      org_number: contact?.org_number ?? '',
       email: contact?.email ?? '',
       phone: contact?.phone ?? '',
       status: contact?.status ?? 'ny',
@@ -126,6 +127,16 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
                 name='company'
                 children={(field) => (
                   <field.TextField label='Företag' placeholder='Acme AB' />
+                )}
+              />
+
+              <form.AppField
+                name='org_number'
+                children={(field) => (
+                  <field.TextField
+                    label='Org.nummer'
+                    placeholder='556123-4567'
+                  />
                 )}
               />
 

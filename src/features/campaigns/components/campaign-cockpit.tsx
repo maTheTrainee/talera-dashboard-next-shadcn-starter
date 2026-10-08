@@ -159,10 +159,13 @@ function getProspectColumns(
           <span className='font-medium'>
             {row.original.first_name} {row.original.last_name}
           </span>
+          <span className='text-muted-foreground text-xs'>
+            {row.original.company ?? ''}
+            {row.original.org_number ? ` · ${row.original.org_number}` : ''}
+          </span>
           {row.original.company && (
-            <span className='text-muted-foreground text-xs'>{row.original.company}</span>
+            <span className='text-muted-foreground text-xs'>{row.original.email}</span>
           )}
-          <span className='text-muted-foreground text-xs'>{row.original.email}</span>
         </div>
       )
     },

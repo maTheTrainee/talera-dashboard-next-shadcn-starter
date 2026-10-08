@@ -1,6 +1,5 @@
 import PocketBase from 'pocketbase';
-import { getTierDefinition } from '@/config/plans';
-import type { TenantMetadata } from '@/types/tenant';
+import type { SubscriptionTier, TenantMetadata } from '@/types/tenant';
 
 /**
  * PocketBase server client — THE READ/WRITE HIGHWAY.
@@ -49,9 +48,9 @@ export async function ensurePbAuth(): Promise<PocketBase> {
 }
 
 /**
- * Reads the tenant's subscription tier from the PocketBase `users` collection
- * (native metadata storage — one row per dashboard user, carrying
- * `clerk_org_id`, `subscription_tier` and `pb_container_id`).
+ * Reads the tenant's packages from the PocketBase `users` collection (native
+ * metadata storage — one row per tenant, carrying `clerk_org_id`,
+ * `subscription_tier` (multi-select) and `pb_container_id`).
  *
  * Falls back to DELTID + the primary container when the collection is
  * unreachable or unset, so the dashboard keeps rendering before the PocketBase
@@ -64,10 +63,13 @@ export async function getTenantMetadata(orgId: string): Promise<TenantMetadata> 
       filter: pb.filter('clerk_org_id = {:orgId}', { orgId })
     });
     const row = result.items[0];
-    const tier = (row?.subscription_tier as string | undefined) ?? 'DELTID';
+    const rawTiers = row?.subscription_tier as string | string[] | undefined;
+    const tiers = (
+      Array.isArray(rawTiers) ? rawTiers : rawTiers ? [rawTiers] : ['DELTID']
+    ) as SubscriptionTier[];
     return {
       orgId,
-      subscription_tier: getTierDefinition(tier).tier,
+      subscription_tiers: tiers,
       pocketbase_container:
         (row?.pb_container_id as string | undefined) ??
         process.env.POCKETBASE_CONTAINER_ID ??
@@ -76,7 +78,7 @@ export async function getTenantMetadata(orgId: string): Promise<TenantMetadata> 
   } catch {
     return {
       orgId,
-      subscription_tier: 'DELTID',
+      subscription_tiers: ['DELTID'],
       pocketbase_container: process.env.POCKETBASE_CONTAINER_ID ?? 'pocketbase'
     };
   }

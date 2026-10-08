@@ -13,12 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
 
 // MOCK — kopplas till /api/usage vid wiring-pass (utfallsfördelning).
+// Semantisk färgskala: grön = vunnet, blå = nära, amber = på väg, grå = ingen
+// signal, röd = förlorat.
 const chartData = [
-  { outcome: 'bokat', antal: 23, fill: 'var(--color-bokat)' },
-  { outcome: 'kvalificerad', antal: 41, fill: 'var(--color-kvalificerad)' },
-  { outcome: 'uppfoljning', antal: 67, fill: 'var(--color-uppfoljning)' },
-  { outcome: 'ej_svar', antal: 132, fill: 'var(--color-ej_svar)' },
-  { outcome: 'nej_tack', antal: 149, fill: 'var(--color-nej_tack)' }
+  { outcome: 'bokat', antal: 23, fill: '#22c55e' },
+  { outcome: 'kvalificerad', antal: 41, fill: '#3b82f6' },
+  { outcome: 'uppfoljning', antal: 67, fill: '#f59e0b' },
+  { outcome: 'ej_svar', antal: 132, fill: '#94a3b8' },
+  { outcome: 'nej_tack', antal: 149, fill: '#ef4444' }
 ];
 
 const chartConfig = {
@@ -27,23 +29,23 @@ const chartConfig = {
   },
   bokat: {
     label: 'Bokat möte',
-    color: 'var(--chart-1)'
+    color: '#22c55e'
   },
   kvalificerad: {
     label: 'Kvalificerad prospekt',
-    color: 'var(--chart-2)'
+    color: '#3b82f6'
   },
   uppfoljning: {
     label: 'Uppföljning',
-    color: 'var(--chart-3)'
+    color: '#f59e0b'
   },
   ej_svar: {
     label: 'Ej svar',
-    color: 'var(--chart-4)'
+    color: '#94a3b8'
   },
   nej_tack: {
     label: 'Nej tack',
-    color: 'var(--chart-5)'
+    color: '#ef4444'
   }
 } satisfies ChartConfig;
 

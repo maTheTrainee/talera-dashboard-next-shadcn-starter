@@ -4,17 +4,23 @@ import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 // MOCK — samtalshistorik förhandsvisning. Wiring pass: swap for
 // useQuery(campaignCallOptions(...)) + /api/calls — the ?callId=[ID] deep
-// links select that call directly.
+// links select that call directly. call_type (utgående/inkommande/intern)
+// comes from n8n per product line.
+
+type CallType = 'utgående' | 'inkommande' | 'intern';
 
 interface HistoryCall {
   id: string;
   callId: string;
+  callType: CallType;
   name: string;
   company: string;
+  orgNumber: string;
   phone: string;
   date: string;
   duration: string;
@@ -23,12 +29,20 @@ interface HistoryCall {
   transcript: { speaker: 'user' | 'agent'; text: string }[];
 }
 
+const CALL_TYPE_META: Record<CallType, { label: string; className: string }> = {
+  'utgående': { label: 'Utgående', className: 'bg-blue-500/15 text-blue-600' },
+  'inkommande': { label: 'Inkommande', className: 'bg-green-500/15 text-green-700' },
+  'intern': { label: 'Intern', className: 'bg-purple-500/15 text-purple-600' }
+};
+
 const MOCK_CALLS: HistoryCall[] = [
   {
     id: '1',
     callId: 'uv-call-8f3a2b1c',
+    callType: 'utgående',
     name: 'Anna Andersson',
     company: 'Acme AB',
+    orgNumber: '556123-4567',
     phone: '+46 70 123 45 67',
     date: 'idag 13:42',
     duration: '4 min 12 s',
@@ -47,9 +61,48 @@ const MOCK_CALLS: HistoryCall[] = [
   },
   {
     id: '2',
+    callId: 'uv-call-2e7f9a4d',
+    callType: 'inkommande',
+    name: 'Kund — okänd nummerpresentatör',
+    company: 'Receptionist',
+    orgNumber: '—',
+    phone: '+46 8 555 100 22',
+    date: 'idag 14:10',
+    duration: '1 min 52 s',
+    outcome: 'Besvarad',
+    summary:
+      'Inkommande samtal besvarat av receptionisten — hänvisade till support och vidarekopplade.',
+    transcript: [
+      { speaker: 'agent', text: 'Talera, Goddag! Hur kan jag hjälpa er?' },
+      { speaker: 'user', text: 'Hej, jag söker er supportavdelning.' },
+      { speaker: 'agent', text: 'Självklart — jag förmedlar er till supporten direkt.' }
+    ]
+  },
+  {
+    id: '3',
+    callId: 'uv-call-3a8c2d7e',
+    callType: 'intern',
+    name: 'Medarbetare — internt stöd',
+    company: 'Intern',
+    orgNumber: '—',
+    phone: 'intern',
+    date: 'idag 14:25',
+    duration: '2 min 15 s',
+    outcome: 'Fråga besvarad',
+    summary:
+      'Medarbetare frågade efter försäljningspratet för Team-paketet — AI-assistenten guida igenom manualen.',
+    transcript: [
+      { speaker: 'user', text: 'Vad säger jag om priset för Team-paketet?' },
+      { speaker: 'agent', text: 'Team-paketet kostar 30 900 kr per månad och inkluderar 2 röstagenter, 2 kampanjer och 2 utgående nummer.' }
+    ]
+  },
+  {
+    id: '4',
     callId: 'uv-call-9d4e3f2a',
+    callType: 'utgående',
     name: 'Erik Svensson',
     company: 'Nordica AB',
+    orgNumber: '556987-1234',
     phone: '+46 73 987 65 43',
     date: 'idag 11:18',
     duration: '2 min 45 s',
@@ -63,10 +116,12 @@ const MOCK_CALLS: HistoryCall[] = [
     ]
   },
   {
-    id: '3',
+    id: '5',
     callId: 'uv-call-7c2d1e9b',
+    callType: 'utgående',
     name: 'Maria Larsson',
     company: 'Bergström & Co',
+    orgNumber: '556456-7890',
     phone: '+46 76 111 22 33',
     date: 'igår 16:05',
     duration: '1 min 38 s',
@@ -78,48 +133,31 @@ const MOCK_CALLS: HistoryCall[] = [
       { speaker: 'user', text: 'Ja, ring gärna igen efter 15 imorgon.' },
       { speaker: 'agent', text: 'Noterar — jag bokar en uppföljning. Vi ringer tillbaka då!' }
     ]
-  },
-  {
-    id: '4',
-    callId: 'uv-call-6b1a0d8c',
-    name: 'Peter Ek',
-    company: 'Nordica AB',
-    phone: '+46 70 333 44 55',
-    date: 'igår 10:30',
-    duration: '0 min 22 s',
-    outcome: 'Ej svar',
-    summary: 'Inget svar efter tre försök — kontakten pausad enligt max-gränsen.',
-    transcript: []
-  },
-  {
-    id: '5',
-    callId: 'uv-call-5a9f8c7d',
-    name: 'Lisa Berg',
-    company: 'Bergström & Co',
-    phone: '+46 76 222 33 44',
-    date: '12 maj 14:22',
-    duration: '3 min 05 s',
-    outcome: 'Nej tack',
-    summary: 'Lisa tackade nej — ingen aktuell budget i år. Följ upp nästa kvartal.',
-    transcript: [
-      { speaker: 'agent', text: 'Hej Lisa! Har ni behov av AI-röstsamtal för er kundlista?' },
-      { speaker: 'user', text: 'Nej tack, inte i år — budgeten är låst.' }
-    ]
   }
 ];
 
+const TYPE_FILTERS: { value: CallType | 'alla'; label: string }[] = [
+  { value: 'alla', label: 'Alla' },
+  { value: 'utgående', label: 'Utgående' },
+  { value: 'inkommande', label: 'Inkommande' },
+  { value: 'intern', label: 'Intern' }
+];
+
 /**
- * Samtalshistorik — list of calls (namn, företag, telefon, call-id,
- * sammanfattning) with the detail view (summary + transcript bubbles).
+ * Samtalshistorik — the unified history across product lines: utgående,
+ * inkommande och interna samtal med filterflikar. List (namn, företag,
+ * org.nummer, call-id, sammanfattning) + detail (summary + transcript).
  */
 export function CallHistoryView() {
   const [search, setSearch] = React.useState('');
+  const [typeFilter, setTypeFilter] = React.useState<CallType | 'alla'>('alla');
   const [selectedId, setSelectedId] = React.useState(MOCK_CALLS[0]?.id ?? '');
 
   const filtered = MOCK_CALLS.filter(
     (call) =>
-      call.name.toLowerCase().includes(search.toLowerCase()) ||
-      call.company.toLowerCase().includes(search.toLowerCase())
+      (typeFilter === 'alla' || call.callType === typeFilter) &&
+      (call.name.toLowerCase().includes(search.toLowerCase()) ||
+        call.company.toLowerCase().includes(search.toLowerCase()))
   );
   const selected =
     MOCK_CALLS.find((call) => call.id === selectedId) ?? filtered[0];
@@ -128,6 +166,18 @@ export function CallHistoryView() {
     <div className='grid min-h-0 flex-1 gap-4 lg:grid-cols-[380px_1fr]'>
       {/* Call list */}
       <Card className='flex flex-col gap-3 rounded-2xl p-3'>
+        <Tabs
+          value={typeFilter}
+          onValueChange={(value) => setTypeFilter(value as CallType | 'alla')}
+        >
+          <TabsList className='w-full'>
+            {TYPE_FILTERS.map((filter) => (
+              <TabsTrigger key={filter.value} value={filter.value} className='flex-1'>
+                {filter.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
         <label htmlFor='call-search' className='sr-only'>
           Sök samtal
         </label>
@@ -144,37 +194,49 @@ export function CallHistoryView() {
               Inga samtal hittades
             </p>
           ) : null}
-          {filtered.map((call) => (
-            <button
-              key={call.id}
-              type='button'
-              onClick={() => setSelectedId(call.id)}
-              aria-current={call.id === selected?.id ? 'true' : undefined}
-              className={cn(
-                'focus-visible:ring-ring relative flex w-full flex-col gap-1.5 rounded-xl border border-transparent p-3 text-left transition-all focus-visible:ring-2 focus-visible:outline-none',
-                call.id === selected?.id
-                  ? 'border-primary/40 bg-primary/10'
-                  : 'hover:bg-muted/40'
-              )}
-            >
-              <div className='flex items-start justify-between gap-2'>
-                <p className='text-sm font-semibold'>{call.name}</p>
-                <span className='text-muted-foreground shrink-0 text-[0.65rem]'>
-                  {call.date}
-                </span>
-              </div>
-              <p className='text-muted-foreground text-xs'>{call.company}</p>
-              <p className='text-muted-foreground line-clamp-1 text-xs'>{call.summary}</p>
-              <div className='flex flex-wrap gap-1'>
-                <Badge variant='outline' className='h-5 rounded-sm px-1.5 text-[10px]'>
-                  {call.outcome}
-                </Badge>
-                <Badge variant='secondary' className='h-5 rounded-sm px-1.5 text-[10px]'>
-                  {call.duration}
-                </Badge>
-              </div>
-            </button>
-          ))}
+          {filtered.map((call) => {
+            const typeMeta = CALL_TYPE_META[call.callType];
+            return (
+              <button
+                key={call.id}
+                type='button'
+                onClick={() => setSelectedId(call.id)}
+                aria-current={call.id === selected?.id ? 'true' : undefined}
+                className={cn(
+                  'focus-visible:ring-ring relative flex w-full flex-col gap-1.5 rounded-xl border border-transparent p-3 text-left transition-all focus-visible:ring-2 focus-visible:outline-none',
+                  call.id === selected?.id
+                    ? 'border-primary/40 bg-primary/10'
+                    : 'hover:bg-muted/40'
+                )}
+              >
+                <div className='flex items-start justify-between gap-2'>
+                  <p className='text-sm font-semibold'>{call.name}</p>
+                  <span className='text-muted-foreground shrink-0 text-[0.65rem]'>
+                    {call.date}
+                  </span>
+                </div>
+                <p className='text-muted-foreground text-xs'>
+                  {call.company}
+                  {call.orgNumber !== '—' ? ` · ${call.orgNumber}` : ''}
+                </p>
+                <p className='text-muted-foreground line-clamp-1 text-xs'>{call.summary}</p>
+                <div className='flex flex-wrap gap-1'>
+                  <Badge
+                    variant='outline'
+                    className={cn('h-5 rounded-sm px-1.5 text-[10px]', typeMeta.className)}
+                  >
+                    {typeMeta.label}
+                  </Badge>
+                  <Badge variant='outline' className='h-5 rounded-sm px-1.5 text-[10px]'>
+                    {call.outcome}
+                  </Badge>
+                  <Badge variant='secondary' className='h-5 rounded-sm px-1.5 text-[10px]'>
+                    {call.duration}
+                  </Badge>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </Card>
 
@@ -186,11 +248,18 @@ export function CallHistoryView() {
               <div>
                 <p className='font-semibold'>{selected.name}</p>
                 <p className='text-muted-foreground text-xs'>
-                  {selected.company} · {selected.phone}
+                  {selected.company}
+                  {selected.orgNumber !== '—' ? ` · Org.nr ${selected.orgNumber}` : ''} ·{' '}
+                  {selected.phone}
                 </p>
               </div>
               <div className='text-right'>
-                <Badge>{selected.outcome}</Badge>
+                <Badge
+                  variant='outline'
+                  className={cn(CALL_TYPE_META[selected.callType].className)}
+                >
+                  {CALL_TYPE_META[selected.callType].label}
+                </Badge>
                 <p className='text-muted-foreground mt-1 text-[10px] font-mono'>
                   call-id: {selected.callId}
                 </p>

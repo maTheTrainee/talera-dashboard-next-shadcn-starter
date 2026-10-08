@@ -14,6 +14,7 @@ interface BoardContact {
   id: string;
   name: string;
   company: string;
+  orgNumber: string;
   phone: string;
   campaign: string;
   attempts: number;
@@ -29,19 +30,19 @@ const BOARD_COLUMNS: { key: ProspectStatus; label: string }[] = [
 
 const MOCK_CONTACTS: Record<string, BoardContact[]> = {
   i_ko: [
-    { id: '1', name: 'Anna Andersson', company: 'Acme AB', phone: '+46 70 123 45 67', campaign: 'Q1 Försäljning', attempts: 1, max: 3 },
-    { id: '2', name: 'Erik Svensson', company: 'Nordica AB', phone: '+46 73 987 65 43', campaign: 'Q1 Försäljning', attempts: 2, max: 3 },
-    { id: '3', name: 'Maria Larsson', company: 'Bergström & Co', phone: '+46 76 111 22 33', campaign: 'Vinterkampanj', attempts: 0, max: 3 }
+    { id: '1', name: 'Anna Andersson', company: 'Acme AB', orgNumber: '556123-4567', phone: '+46 70 123 45 67', campaign: 'Q1 Försäljning', attempts: 1, max: 3 },
+    { id: '2', name: 'Erik Svensson', company: 'Nordica AB', orgNumber: '556987-1234', phone: '+46 73 987 65 43', campaign: 'Q1 Försäljning', attempts: 2, max: 3 },
+    { id: '3', name: 'Maria Larsson', company: 'Bergström & Co', orgNumber: '556456-7890', phone: '+46 76 111 22 33', campaign: 'Vinterkampanj', attempts: 0, max: 3 }
   ],
   ringer: [
-    { id: '4', name: 'Johan Nilsson', company: 'Acme AB', phone: '+46 70 456 78 90', campaign: 'Q1 Försäljning', attempts: 2, max: 3 }
+    { id: '4', name: 'Johan Nilsson', company: 'Acme AB', orgNumber: '556123-4567', phone: '+46 70 456 78 90', campaign: 'Q1 Försäljning', attempts: 2, max: 3 }
   ],
   i_samtal: [
-    { id: '5', name: 'Sara Lindberg', company: 'Fjällbacka Handel', phone: '+46 76 998 87 76', campaign: 'Vinterkampanj', attempts: 1, max: 3 }
+    { id: '5', name: 'Sara Lindberg', company: 'Fjällbacka Handel', orgNumber: '556321-6543', phone: '+46 76 998 87 76', campaign: 'Vinterkampanj', attempts: 1, max: 3 }
   ],
   avslutat: [
-    { id: '6', name: 'Peter Ek', company: 'Nordica AB', phone: '+46 70 333 44 55', campaign: 'Q1 Försäljning', attempts: 3, max: 3 },
-    { id: '7', name: 'Lisa Berg', company: 'Bergström & Co', phone: '+46 76 222 33 44', campaign: 'Vinterkampanj', attempts: 1, max: 3 }
+    { id: '6', name: 'Peter Ek', company: 'Nordica AB', orgNumber: '556987-1234', phone: '+46 70 333 44 55', campaign: 'Q1 Försäljning', attempts: 3, max: 3 },
+    { id: '7', name: 'Lisa Berg', company: 'Bergström & Co', orgNumber: '556456-7890', phone: '+46 76 222 33 44', campaign: 'Vinterkampanj', attempts: 1, max: 3 }
   ]
 };
 
@@ -84,7 +85,7 @@ export function RealtimeBoard() {
                     <div className='flex flex-col gap-1.5'>
                       <span className='line-clamp-1 text-sm font-medium'>{contact.name}</span>
                       <span className='text-muted-foreground line-clamp-1 text-xs'>
-                        {contact.company}
+                        {contact.company} · {contact.orgNumber}
                       </span>
                       <div className='text-muted-foreground flex items-center justify-between text-xs'>
                         <span className='line-clamp-1'>{contact.phone}</span>

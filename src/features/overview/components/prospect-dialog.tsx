@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 export interface ProspectPreview {
   name: string;
   company: string;
+  orgNumber?: string;
   phone: string;
   status: string;
   followUpAt?: string;
@@ -56,8 +57,9 @@ export function ProspectDialog({ open, onClose, prospect }: ProspectDialogProps)
         <DialogHeader>
           <DialogTitle>{prospect?.name ?? 'Prospekt'}</DialogTitle>
           <DialogDescription>
-            {prospect?.company ? `${prospect.company} · ` : ''}
-            {prospect?.phone}
+            {prospect?.company ? `${prospect.company}` : ''}
+            {prospect?.orgNumber ? ` · Org.nr ${prospect.orgNumber}` : ''}
+            {prospect?.phone ? ` · ${prospect.phone}` : ''}
           </DialogDescription>
         </DialogHeader>
 

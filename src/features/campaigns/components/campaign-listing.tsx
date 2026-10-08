@@ -1,31 +1,13 @@
-import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
-import { getQueryClient } from '@/lib/query-client';
-import { searchParamsCache } from '@/lib/searchparams';
-import { campaignsQueryOptions } from '../api/queries';
-import { CampaignsTable } from './campaign-tables';
+import { Suspense } from 'react';
+import { CampaignsTable, CampaignsTableSkeleton } from './campaign-tables';
 
 export default function CampaignListingPage() {
-  const page = searchParamsCache.get('page');
-  const search = searchParamsCache.get('name');
-  const pageLimit = searchParamsCache.get('perPage');
-  const status = searchParamsCache.get('status');
-  const sort = searchParamsCache.get('sort');
-
-  const filters = {
-    page,
-    limit: pageLimit,
-    ...(search && { search }),
-    ...(status && { status }),
-    ...(sort && { sort })
-  };
-
-  const queryClient = getQueryClient();
-
-  void queryClient.prefetchQuery(campaignsQueryOptions(filters));
-
+  // The BFF pattern fetches client-side: the Clerk session cookies can't be
+  // forwarded on a server-side prefetch without extra plumbing (deferred to
+  // the wiring pass).
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <Suspense fallback={<CampaignsTableSkeleton />}>
       <CampaignsTable />
-    </HydrationBoundary>
+    </Suspense>
   );
 }

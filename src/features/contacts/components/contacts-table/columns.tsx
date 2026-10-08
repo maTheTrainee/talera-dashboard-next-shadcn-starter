@@ -47,6 +47,21 @@ export const columns: ColumnDef<Contact>[] = [
     )
   },
   {
+    id: 'org_number',
+    accessorKey: 'org_number',
+    header: ({ column }: { column: Column<Contact, unknown> }) => (
+      <DataTableColumnHeader column={column} title='Org.nummer' />
+    ),
+    cell: ({ cell }) => {
+      const orgNumber = cell.getValue<Contact['org_number']>();
+      return (
+        <span className='text-muted-foreground text-sm tabular-nums'>
+          {orgNumber ?? '—'}
+        </span>
+      );
+    }
+  },
+  {
     id: 'status',
     accessorKey: 'status',
     enableSorting: false,
