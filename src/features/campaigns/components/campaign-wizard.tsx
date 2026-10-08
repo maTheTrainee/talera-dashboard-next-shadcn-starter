@@ -44,7 +44,8 @@ const stepSchemas = [
       scheduled_start: true,
       scheduled_end: true,
       uv_agent_id: true,
-      outbound_number: true
+      outbound_number: true,
+      max_attempts: true
     })
     .refine(
       (data) => {
@@ -76,6 +77,7 @@ function ReviewSummary({
     scheduled_end: string;
     uv_agent_id: string;
     outbound_number: string;
+    max_attempts?: number;
     csv_file?: File[];
   };
 }) {
@@ -107,6 +109,16 @@ function ReviewSummary({
           </p>
         </div>
         <div>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>
+            Max Kontaktförsök
+          </p>
+          <p className='text-sm'>
+            {(values.max_attempts ?? 3) > 0
+              ? `${values.max_attempts ?? 3} försök`
+              : 'Obegränsat'}
+          </p>
+        </div>
+        <div>
           <p className='text-muted-foreground text-xs font-medium uppercase'>Prospekt-CSV</p>
           <p className='text-sm'>
             {values.csv_file?.length
@@ -128,6 +140,7 @@ type WizardFormValues = {
   scheduled_end: string;
   uv_agent_id: string;
   outbound_number: string;
+  max_attempts?: number;
   csv_file?: File[];
 };
 
@@ -161,6 +174,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
       scheduled_end: '',
       uv_agent_id: '',
       outbound_number: '',
+      max_attempts: 3,
       csv_file: []
     } as WizardFormValues,
     validationLogic: revalidateLogic(),
@@ -175,7 +189,8 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
         scheduled_start: value.scheduled_start,
         scheduled_end: value.scheduled_end,
         uv_agent_id: value.uv_agent_id,
-        outbound_number: normalizePhoneNumber(value.outbound_number)
+        outbound_number: normalizePhoneNumber(value.outbound_number),
+        max_attempts: value.max_attempts ?? 3
       });
     }
   });
@@ -287,6 +302,18 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                       required
                       type='tel'
                       placeholder='07X XXX XX XX'
+                    />
+                  )}
+                />
+
+                <form.AppField
+                  name='max_attempts'
+                  children={(field) => (
+                    <field.TextField
+                      label='Max Kontaktförsök'
+                      type='number'
+                      min={0}
+                      placeholder='3 (0 = obegränsat)'
                     />
                   )}
                 />

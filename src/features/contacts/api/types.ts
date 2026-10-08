@@ -10,6 +10,12 @@ export interface Contact {
   phone: string;
   status: string;
   call_outcome: string | null;
+  /** "Uppföljning 2026-05-03 15:30" — when the agent will call back. */
+  follow_up_at: string | null;
+  /** Every dial attempt (n8n-maintained, read-only from the app). */
+  contact_attempts: number | null;
+  last_contacted_at: string | null;
+  last_conversation_at: string | null;
   created: string;
   updated: string;
 }
@@ -33,4 +39,5 @@ export type ContactMutationPayload = {
   email: string;
   phone: string;
   status: string;
+  follow_up_at?: string | null;
 };

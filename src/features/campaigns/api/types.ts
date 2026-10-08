@@ -1,6 +1,14 @@
 export type CampaignStatus = 'köad' | 'live' | 'pausad' | 'avslutad';
 
-export type ProspectStatus = 'ny' | 'i_ko' | 'ringer' | 'i_samtal' | 'avslutat' | 'ej_svar';
+export type ProspectStatus =
+  | 'ny'
+  | 'i_ko'
+  | 'ringer'
+  | 'i_samtal'
+  | 'avslutat'
+  | 'ej_svar'
+  | 'uppföljning'
+  | 'max_försök';
 
 export interface Campaign {
   id: string;
@@ -14,6 +22,8 @@ export interface Campaign {
   uv_agent_id: string;
   /** E.164 — regex-cleaned on input (07X → +467X). */
   outbound_number: string;
+  /** Anti-spam cap: the engine stops dialing at this many attempts without a booked follow-up. 0 = unlimited. */
+  max_attempts: number | null;
   created: string;
   updated: string;
 }
@@ -30,6 +40,12 @@ export interface CampaignProspect {
   phone: string;
   status: ProspectStatus;
   call_outcome: string | null;
+  /** "Uppföljning 2026-05-03 15:30" — when the agent will call back. */
+  follow_up_at: string | null;
+  /** Every dial attempt (n8n-maintained, read-only from the app). */
+  contact_attempts: number | null;
+  last_contacted_at: string | null;
+  last_conversation_at: string | null;
   created: string;
   updated: string;
 }
@@ -74,6 +90,8 @@ export type CampaignMutationPayload = {
   scheduled_end: string;
   uv_agent_id: string;
   outbound_number: string;
+  /** Anti-spam cap: 0 = unlimited (default 3). */
+  max_attempts?: number | null;
 };
 
 export type CampaignUpdatePayload = Partial<CampaignMutationPayload> & {

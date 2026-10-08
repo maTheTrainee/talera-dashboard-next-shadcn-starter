@@ -103,7 +103,7 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
         </TabsList>
 
         <TabsContent value='prospekter' className='mt-4'>
-          <ProspectsGrid campaignId={campaignId} onOpenTranscript={setTranscriptCallId} />
+          <ProspectsGrid campaign={campaign} onOpenTranscript={setTranscriptCallId} />
         </TabsContent>
 
         <TabsContent value='detaljer' className='mt-4'>
@@ -142,6 +142,7 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
 // --- Relational prospects grid ---
 
 function getProspectColumns(
+  campaign: Campaign,
   onOpenTranscript: (callId: string) => void
 ): ColumnDef<CampaignProspect>[] {
   return [
@@ -175,12 +176,36 @@ function getProspectColumns(
       id: 'status',
       accessorKey: 'status',
       header: 'Ringstatus',
-      cell: ({ cell }) => {
-        const status = cell.getValue<CampaignProspect['status']>();
+      cell: ({ row }) => {
+        const status = row.original.status;
         return (
-          <Badge variant='outline' className='capitalize'>
-            {status.replace('_', ' ')}
-          </Badge>
+          <div className='flex flex-col'>
+            <Badge variant='outline' className='w-fit capitalize'>
+              {status.replace('_', ' ')}
+            </Badge>
+            {status === 'uppföljning' && row.original.follow_up_at && (
+              <span className='text-muted-foreground text-xs'>
+                {new Date(row.original.follow_up_at).toLocaleString('sv-SE', {
+                  dateStyle: 'short',
+                  timeStyle: 'short'
+                })}
+              </span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      id: 'contact_attempts',
+      accessorKey: 'contact_attempts',
+      header: 'Kontaktförsök',
+      cell: ({ row }) => {
+        const attempts = row.original.contact_attempts ?? 0;
+        const max = campaign.max_attempts ?? 0;
+        return (
+          <span className='text-muted-foreground text-sm'>
+            {max > 0 ? `${attempts}/${max}` : attempts}
+          </span>
         );
       }
     },
@@ -212,21 +237,24 @@ function getProspectColumns(
 }
 
 function ProspectsGrid({
-  campaignId,
+  campaign,
   onOpenTranscript
 }: {
-  campaignId: string;
+  campaign: Campaign;
   onOpenTranscript: (callId: string) => void;
 }) {
   const [search, setSearch] = React.useState('');
   const filters = { limit: 25, ...(search && { search }) };
 
   const { data } = useQuery({
-    ...campaignProspectsOptions(campaignId, filters),
+    ...campaignProspectsOptions(campaign.id, filters),
     placeholderData: (prev) => prev
   });
 
-  const columns = React.useMemo(() => getProspectColumns(onOpenTranscript), [onOpenTranscript]);
+  const columns = React.useMemo(
+    () => getProspectColumns(campaign, onOpenTranscript),
+    [campaign, onOpenTranscript]
+  );
 
   const { table } = useDataTable({
     data: data?.items ?? [],

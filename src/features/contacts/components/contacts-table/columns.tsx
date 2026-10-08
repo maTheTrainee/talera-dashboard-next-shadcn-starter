@@ -50,18 +50,28 @@ export const columns: ColumnDef<Contact>[] = [
     header: ({ column }: { column: Column<Contact, unknown> }) => (
       <DataTableColumnHeader column={column} title='Ringstatus' />
     ),
-    cell: ({ cell }) => {
-      const status = cell.getValue<Contact['status']>();
+    cell: ({ row }) => {
+      const status = row.original.status;
       const variant =
         status === 'avslutat' || status === 'i_samtal'
           ? 'default'
-          : status === 'ringer'
+          : status === 'ringer' || status === 'uppföljning'
             ? 'secondary'
             : 'outline';
       return (
-        <Badge variant={variant} className='capitalize'>
-          {status.replace('_', ' ')}
-        </Badge>
+        <div className='flex flex-col'>
+          <Badge variant={variant} className='w-fit capitalize'>
+            {status.replace('_', ' ')}
+          </Badge>
+          {status === 'uppföljning' && row.original.follow_up_at && (
+            <span className='text-muted-foreground text-xs'>
+              {new Date(row.original.follow_up_at).toLocaleString('sv-SE', {
+                dateStyle: 'short',
+                timeStyle: 'short'
+              })}
+            </span>
+          )}
+        </div>
       );
     },
     enableColumnFilter: true,
@@ -69,6 +79,37 @@ export const columns: ColumnDef<Contact>[] = [
       label: 'status',
       variant: 'multiSelect' as const,
       options: PROSPECT_STATUS_OPTIONS
+    }
+  },
+  {
+    id: 'contact_attempts',
+    accessorKey: 'contact_attempts',
+    header: ({ column }: { column: Column<Contact, unknown> }) => (
+      <DataTableColumnHeader column={column} title='Kontaktförsök' />
+    ),
+    cell: ({ cell }) => {
+      const attempts = cell.getValue<Contact['contact_attempts']>();
+      return <span className='text-muted-foreground text-sm'>{attempts ?? 0}</span>;
+    }
+  },
+  {
+    id: 'last_contacted_at',
+    accessorKey: 'last_contacted_at',
+    header: ({ column }: { column: Column<Contact, unknown> }) => (
+      <DataTableColumnHeader column={column} title='Senast' />
+    ),
+    cell: ({ cell }) => {
+      const last = cell.getValue<Contact['last_contacted_at']>();
+      return (
+        <span className='text-muted-foreground text-sm'>
+          {last
+            ? new Date(last).toLocaleString('sv-SE', {
+                dateStyle: 'short',
+                timeStyle: 'short'
+              })
+            : '—'}
+        </span>
+      );
     }
   },
   {

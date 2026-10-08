@@ -59,7 +59,8 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
       scheduled_start: campaign?.scheduled_start?.slice(0, 16) ?? '',
       scheduled_end: campaign?.scheduled_end?.slice(0, 16) ?? '',
       uv_agent_id: campaign?.uv_agent_id ?? '',
-      outbound_number: campaign?.outbound_number ?? ''
+      outbound_number: campaign?.outbound_number ?? '',
+      max_attempts: campaign?.max_attempts ?? 3
     } as CampaignFormValues,
     validators: {
       onSubmit: campaignSchema
@@ -150,6 +151,18 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
                     required
                     type='tel'
                     placeholder='07X XXX XX XX (normaliseras till +467X)'
+                  />
+                )}
+              />
+
+              <form.AppField
+                name='max_attempts'
+                children={(field) => (
+                  <field.TextField
+                    label='Max Kontaktförsök'
+                    type='number'
+                    min={0}
+                    placeholder='3 (0 = obegränsat)'
                   />
                 )}
               />

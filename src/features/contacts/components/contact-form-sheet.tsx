@@ -14,6 +14,7 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
+import { useStore } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { createContactMutation, updateContactMutation } from '../api/mutations';
 import type { Contact } from '../api/types';
@@ -59,13 +60,18 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
       last_name: contact?.last_name ?? '',
       email: contact?.email ?? '',
       phone: contact?.phone ?? '',
-      status: contact?.status ?? 'ny'
+      status: contact?.status ?? 'ny',
+      follow_up_at: contact?.follow_up_at?.replace(' ', 'T').slice(0, 16) ?? ''
     } as ContactFormValues,
     validators: {
       onSubmit: contactSchema
     },
     onSubmit: async ({ value }) => {
-      const values = { ...value, phone: normalizeProspectPhone(value.phone) };
+      const values = {
+        ...value,
+        phone: normalizeProspectPhone(value.phone),
+        follow_up_at: value.follow_up_at ? new Date(value.follow_up_at).toISOString() : null
+      };
       if (isEdit) {
         await updateMutation.mutateAsync({ id: contact.id, values });
       } else {
@@ -73,6 +79,8 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
       }
     }
   });
+
+  const watchedStatus = useStore(form.store, (state) => state.values.status);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -147,6 +155,19 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
                   />
                 )}
               />
+
+              {watchedStatus === 'uppföljning' && (
+                <form.AppField
+                  name='follow_up_at'
+                  children={(field) => (
+                    <field.TextField
+                      label='Uppföljning — återuppringning'
+                      required
+                      type='datetime-local'
+                    />
+                  )}
+                />
+              )}
             </FieldGroup>
           </form>
         </div>

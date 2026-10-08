@@ -6,5 +6,7 @@ export const PROSPECT_STATUS_OPTIONS: { value: ProspectStatus; label: string }[]
   { value: 'ringer', label: 'Ringer' },
   { value: 'i_samtal', label: 'I samtal' },
   { value: 'avslutat', label: 'Avslutat' },
-  { value: 'ej_svar', label: 'Ej svar' }
+  { value: 'ej_svar', label: 'Ej svar' },
+  { value: 'uppföljning', label: 'Uppföljning' },
+  { value: 'max_försök', label: 'Max försök' }
 ];

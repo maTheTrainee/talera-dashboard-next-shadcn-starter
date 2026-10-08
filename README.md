@@ -271,7 +271,7 @@ To keep page loads snappy, we split our data traffic into two independent highwa
 
 ### 3. Network Environment Gateway Rules (`src/lib/pb.ts`)
 The server data pipelines must dynamically adjust their base connection paths depending on the isolated environment variables:
-* **DEVELOPMENT MODE (`process.env.NODE_ENV !== 'production'`):** Next.js communicates with PocketBase via our secure Tailscale MagicDNS bridge route: `http://kallare-server:8080`.
+* **DEVELOPMENT MODE (`process.env.NODE_ENV !== 'production'`):** Next.js communicates with PocketBase via our secure Tailscale MagicDNS bridge route: `http://kallare-server:8090` (the public Tailscale port — humans and the dev server both reach PocketBase through it; the Coolify-internal container port 8080 is only reachable inside the server's Docker network).
 * **PRODUCTION MODE (`process.env.NODE_ENV === 'production'`):** Next.js routes data requests directly over the private internal Docker container network hook inside Coolify: `http://pocketbase:8080`.
 
 ### 4. Product Packages & Feature Gating Schemas (B2B SEK Pricing)

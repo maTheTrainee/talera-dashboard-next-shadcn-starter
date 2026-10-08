@@ -11,13 +11,15 @@ import type { TenantMetadata } from '@/types/tenant';
  * query is filtered by the verified orgId so tenants cannot cross-pollinate.
  *
  * Network environment gateways (no override logic — strict env switch):
- * - DEVELOPMENT (NODE_ENV !== 'production'): secure Tailscale MagicDNS bridge.
- * - PRODUCTION  (NODE_ENV === 'production'): Coolify internal Docker network.
+ * - DEVELOPMENT (NODE_ENV !== 'production'): Tailscale public port 8090
+ *   (humans + Next.js dev both reach PocketBase through it).
+ * - PRODUCTION  (NODE_ENV === 'production'): Coolify-internal Docker network
+ *   port 8080 — only reachable inside the server's container network.
  */
 const PB_URL =
   process.env.NODE_ENV === 'production'
-    ? 'http://pocketbase:8080'
-    : 'http://kallare-server:8080';
+    ? 'http://pocketbase:8080' // Coolify-internal container port (Docker network)
+    : 'http://kallare-server:8090'; // Tailscale public port (dev host)
 
 let pbSingleton: PocketBase | null = null;
 

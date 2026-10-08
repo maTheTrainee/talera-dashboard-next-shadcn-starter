@@ -28,7 +28,11 @@ export const campaignBaseSchema = z.object({
     .refine(
       (value) => /^\+?[0-9\s\-().]{8,20}$/.test(value),
       'Ange ett giltigt telefonnummer (t.ex. 07X eller +467X)'
-    )
+    ),
+  max_attempts: z
+    .number({ error: 'Ange ett tal' })
+    .min(0, 'Kan inte vara negativt')
+    .optional()
 });
 
 export const campaignSchema = campaignBaseSchema.refine(
