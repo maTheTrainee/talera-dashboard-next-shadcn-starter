@@ -14,8 +14,6 @@ import { Icons } from '@/components/icons';
 import React from 'react';
 
 // MOCK — kopplas till /api/usage vid wiring-pass (bokningar per vecka).
-// Semantiska färger: möten = grön, uppföljningar = amber (samma skala som
-// utfallsfördelningen).
 const chartData = [
   { week: 'v38', moeten: 4, uppfoljningar: 9 },
   { week: 'v39', moeten: 6, uppfoljningar: 12 },
@@ -26,11 +24,11 @@ const chartData = [
 const chartConfig = {
   moeten: {
     label: 'Bokade möten',
-    color: '#22c55e'
+    color: 'var(--chart-1)'
   },
   uppfoljningar: {
     label: 'Bokade uppföljningar',
-    color: '#f59e0b'
+    color: 'var(--chart-2)'
   }
 } satisfies ChartConfig;
 
