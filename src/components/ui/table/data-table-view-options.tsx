@@ -34,7 +34,7 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
       <PopoverTrigger
         render={
           <Button
-            aria-label='Toggle columns'
+            aria-label='Växla kolumner'
             variant='outline'
             size='sm'
             className='ml-auto hidden h-8 lg:flex'
@@ -42,14 +42,14 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
         }
       >
         <Icons.adjustments />
-        View
+        Visa
         <Icons.chevronsUpDown className='ml-auto opacity-50' />
       </PopoverTrigger>
       <PopoverContent align='end' className='w-44 p-0'>
         <Command>
-          <CommandInput placeholder='Search columns...' />
+          <CommandInput placeholder='Sök kolumner...' />
           <CommandList>
-            <CommandEmpty>No columns found.</CommandEmpty>
+            <CommandEmpty>Inga kolumner hittades.</CommandEmpty>
             <CommandGroup>
               {columns.map((column) => (
                 <CommandItem

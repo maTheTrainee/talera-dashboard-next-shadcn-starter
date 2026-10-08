@@ -20,6 +20,7 @@ import type { Campaign } from '../api/types';
 import { toast } from 'sonner';
 import {
   campaignSchema,
+  DIALING_WINDOW_START,
   normalizePhoneNumber,
   type CampaignFormValues
 } from '../schemas/campaign';
@@ -58,7 +59,6 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
       description: campaign?.description ?? '',
       scheduled_start: campaign?.scheduled_start?.slice(0, 16) ?? '',
       scheduled_end: campaign?.scheduled_end?.slice(0, 16) ?? '',
-      uv_agent_id: campaign?.uv_agent_id ?? '',
       outbound_number: campaign?.outbound_number ?? '',
       max_attempts: campaign?.max_attempts ?? 3
     } as CampaignFormValues,
@@ -125,7 +125,12 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
                 <form.AppField
                   name='scheduled_start'
                   children={(field) => (
-                    <field.TextField label='Start' required type='datetime-local' />
+                    <field.TextField
+                      label='Start'
+                      required
+                      type='datetime-local'
+                      min={`${new Date().toISOString().slice(0, 10)}T${DIALING_WINDOW_START}`}
+                    />
                   )}
                 />
                 <form.AppField
@@ -135,13 +140,6 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
                   )}
                 />
               </div>
-
-              <form.AppField
-                name='uv_agent_id'
-                children={(field) => (
-                  <field.TextField label='Röstagent-ID' required placeholder='agent_xxx' />
-                )}
-              />
 
               <form.AppField
                 name='outbound_number'

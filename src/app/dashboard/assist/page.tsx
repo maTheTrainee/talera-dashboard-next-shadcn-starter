@@ -9,7 +9,7 @@ export default function AssistPage() {
   return (
     <PageContainer
       pageTitle='Ring AI-Assistent'
-      pageDescription='Säker, textlös WebRTC-ljudarbetsyta.'
+      pageDescription='Din AI-assistent är redo — tryck för att ringa. Samtalet startar direkt i webbläsaren via en säker röstanslutning.'
     >
       <AssistWorkspace />
     </PageContainer>

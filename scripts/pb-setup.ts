@@ -52,6 +52,24 @@ const rules = {
   deleteRule: null
 };
 
+// 0. agents — the uv voice agents per tenant (registered once by admins after
+// creating them in the engine; n8n may sync them later). The dashboard never
+// shows raw IDs — campaigns resolve agents by name.
+const agents = await ensureCollection({
+  name: 'agents',
+  type: 'base',
+  ...rules,
+  fields: [
+    { name: 'org_id', type: 'text', required: true },
+    { name: 'name', type: 'text', required: true },
+    { name: 'uv_agent_id', type: 'text', required: true },
+    { name: 'description', type: 'text' },
+    { name: 'active', type: 'bool' }
+  ],
+  indexes: ['CREATE INDEX idx_agents_org ON agents (org_id)']
+});
+void agents;
+
 // 1. campaigns — dialing campaigns with the anti-spam policy cap
 const campaigns = await ensureCollection({
   name: 'campaigns',
@@ -183,7 +201,7 @@ const additions = [
     name: 'subscription_tier',
     type: 'select',
     maxSelect: 1,
-    values: ['DELTID', 'HELTID', 'TEAM', 'ENTERPRISE']
+    values: ['DELTID', 'HELTID', 'TEAM', 'ENTERPRISE', 'RECEPTIONIST', 'AI_ASSISTENT']
   },
   { name: 'pb_container_id', type: 'text' }
 ].filter((f) => !existing.has(f.name));
@@ -193,6 +211,24 @@ if (additions.length > 0) {
   console.log(`✓ users utökad: ${additions.map((f) => f.name).join(', ')}`);
 } else {
   console.log('• users redan utökad — hoppar över');
+}
+
+// 6. Sync the subscription_tier select values (adds the inbound packages to a
+// live collection that already carries the field with the old value set).
+const tierField = users.fields.find((f: { name: string }) => f.name === 'subscription_tier');
+const wantedTiers = ['DELTID', 'HELTID', 'TEAM', 'ENTERPRISE', 'RECEPTIONIST', 'AI_ASSISTENT'];
+if (tierField) {
+  const current: string[] = tierField.values ?? [];
+  const missing = wantedTiers.filter((v) => !current.includes(v));
+  if (missing.length > 0) {
+    const updatedFields = users.fields.map((f: { name: string }) =>
+      f.name === 'subscription_tier' ? { ...f, values: [...current, ...missing] } : f
+    );
+    await pb.collections.update('users', { fields: updatedFields });
+    console.log(`✓ users.subscription_tier utökad: ${missing.join(', ')}`);
+  } else {
+    console.log('• users.subscription_tier redan uppdaterad');
+  }
 }
 
 console.log('');

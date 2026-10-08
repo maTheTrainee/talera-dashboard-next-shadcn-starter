@@ -4,9 +4,9 @@ import { requireAuthContext } from '@/lib/api-auth';
 import { ensurePbAuth, getTenantMetadata } from '@/lib/pb';
 
 // ============================================================
-// Usage — Clerk firewall. Daily minute quota + accrued overage liability
-// for the Översikt dashboard. Overage minutes are tracked by the automation
-// engine in PocketBase (usage_daily collection).
+// Usage — Clerk firewall. Pool model: consumption = sum of usage_daily for
+// the current billing month, reported against the tier's minute pool.
+// Offert tiers (minutePool = null) are display-only — never gated.
 // ============================================================
 
 export async function GET() {
@@ -20,22 +20,36 @@ export async function GET() {
   let minutesUsed = 0;
   try {
     const pb = await ensurePbAuth();
-    const today = new Date().toISOString().slice(0, 10);
-    const result = await pb.collection('usage_daily').getList(1, 1, {
-      filter: pb.filter('org_id = {:orgId} && date = {:date}', { orgId, date: today })
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const result = await pb.collection('usage_daily').getList(1, 200, {
+      filter: pb.filter('org_id = {:orgId} && date >= {:from}', {
+        orgId,
+        from: monthStart.toISOString().slice(0, 10)
+      }),
+      sort: '-date'
     });
-    minutesUsed = Number(result.items[0]?.minutes_used ?? 0);
+    minutesUsed = result.items.reduce(
+      (sum, row) => sum + Number(row.minutes_used ?? 0),
+      0
+    );
   } catch {
     // usage_daily not provisioned yet — report zeros so the UI still renders.
   }
 
   const overage = computeOverage(minutesUsed, tier);
+  const pool = tier.minutePool;
 
   return NextResponse.json({
     tier: tenant.subscription_tier,
     tierLabel: tier.label,
-    dailyMinuteLimit: tier.dailyMinuteLimit,
+    productLine: tier.productLine,
+    minutePool: pool,
     minutesUsed,
+    minutesRemaining: pool == null ? null : Math.max(0, pool - minutesUsed),
+    poolUtilizationPercent:
+      pool == null ? null : Math.min(100, Math.round((minutesUsed / pool) * 100)),
     overageMinutes: overage.overageMinutes,
     overageRateSekPerMin: OVERAGE_RATE_SEK_PER_MIN,
     liabilitySek: overage.liabilitySek

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTierDefinition } from '@/config/plans';
+import { canCreateCampaigns, getTierDefinition } from '@/config/plans';
 import { requireAuthContext } from '@/lib/api-auth';
 import { ensurePbAuth, getTenantMetadata } from '@/lib/pb';
 import type {
@@ -11,7 +11,8 @@ import type {
 // ============================================================
 // Campaigns — Clerk firewall (Read/Write Highway)
 // Every query is filtered strictly by the verified orgId so tenants
-// cannot cross-pollinate data.
+// cannot cross-pollinate data. Inbound packages (Receptionist /
+// AI-Assistent) get no campaign creation.
 // ============================================================
 
 export async function GET(request: NextRequest) {
@@ -45,8 +46,24 @@ export async function GET(request: NextRequest) {
       sort
     });
 
+    // Prospekter count per campaign (one light count query per row on the page)
+    const items: Campaign[] = [];
+    for (const raw of resultList.items) {
+      const campaign = raw as unknown as Campaign;
+      let prospectCount = 0;
+      try {
+        const count = await pb.collection('contacts').getList(1, 1, {
+          filter: pb.filter('campaign = {:id}', { id: campaign.id })
+        });
+        prospectCount = count.totalItems;
+      } catch {
+        prospectCount = 0;
+      }
+      items.push({ ...campaign, prospect_count: prospectCount });
+    }
+
     const response: CampaignsResponse = {
-      items: resultList.items as unknown as Campaign[],
+      items,
       total_items: resultList.totalItems
     };
     return NextResponse.json(response);
@@ -64,9 +81,18 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CampaignMutationPayload;
     const pb = await ensurePbAuth();
 
+    // Tenant + package gate: inbound packages (Receptionist / AI-Assistent)
+    // get no campaign creation.
+    const tenant = await getTenantMetadata(orgId);
+    if (!canCreateCampaigns(tenant.subscription_tier)) {
+      return NextResponse.json(
+        { error: 'Erbjudandet omfattar inte utgående kampanjer.' },
+        { status: 403 }
+      );
+    }
+
     // Tier gating — plan limits come from the tenant metadata (ENTERPRISE is
     // quote-based and never hard-limited in code).
-    const tenant = await getTenantMetadata(orgId);
     const tier = getTierDefinition(tenant.subscription_tier);
 
     if (!tier.quoteBased) {

@@ -74,10 +74,10 @@ export function AssistWorkspace() {
           <h2 className='text-2xl font-semibold'>Ring AI-Assistent</h2>
           <p className='text-muted-foreground text-sm'>
             {isLive
-              ? 'I samtal — tala fritt.'
+              ? 'Samtalet är igång — tala fritt.'
               : isBusy
-                ? 'Etablerar säker anslutning...'
-                : 'Tryck på knappen för att starta ett säkert samtal.'}
+                ? 'Kopplar upp en säker röstkanal…'
+                : 'Din AI-assistent är redo — tryck på knappen så ringer du direkt. Samtalet sker helt med röst.'}
           </p>
         </div>
 

@@ -19,11 +19,14 @@ export interface Campaign {
   /** ISO — strict 4-hour minimum scheduling window is enforced by Zod. */
   scheduled_start: string;
   scheduled_end: string;
+  /** n8n owns the agent mapping at dial-time — this field is an n8n-written audit value, never user-facing. */
   uv_agent_id: string;
   /** E.164 — regex-cleaned on input (07X → +467X). */
   outbound_number: string;
   /** Anti-spam cap: the engine stops dialing at this many attempts without a booked follow-up. 0 = unlimited. */
   max_attempts: number | null;
+  /** Count of prospects locked into the campaign (computed by the API). */
+  prospect_count?: number;
   created: string;
   updated: string;
 }
@@ -55,7 +58,7 @@ export interface CampaignCall {
   org_id: string;
   campaign_id: string;
   prospect_id: string | null;
-  /** Engine session id (uv). */
+  /** Engine call id (uv) — written by n8n from the call lifecycle webhook. */
   call_id: string;
   status: string;
   outcome: string | null;
@@ -88,7 +91,6 @@ export type CampaignMutationPayload = {
   description: string;
   scheduled_start: string;
   scheduled_end: string;
-  uv_agent_id: string;
   outbound_number: string;
   /** Anti-spam cap: 0 = unlimited (default 3). */
   max_attempts?: number | null;

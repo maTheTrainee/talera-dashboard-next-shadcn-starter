@@ -8,7 +8,13 @@
  * server and enforce call concurrency limits based on subscription tier.
  */
 
-export type SubscriptionTier = 'DELTID' | 'HELTID' | 'TEAM' | 'ENTERPRISE';
+export type SubscriptionTier =
+  | 'DELTID'
+  | 'HELTID'
+  | 'TEAM'
+  | 'ENTERPRISE'
+  | 'RECEPTIONIST'
+  | 'AI_ASSISTENT';
 
 export type N8nAction = 'start.web.session' | 'start.batch.campaign';
 

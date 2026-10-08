@@ -1,19 +1,27 @@
 import type { SubscriptionTier } from '@/types/tenant';
 
 /**
- * Outbound campaign plan matrix (SEK pricing / daily minute limits).
- * ENTERPRISE is a bespoke, quote-based tier — volume bounds are negotiated per
- * contract and are therefore null here (never hard-limited in code).
+ * Talera product matrix — two product lines:
+ * - OUTBOUND (kampanjer): minute-pool packages + ENTERPRISE (offert).
+ * - INBOUND: Receptionist + AI-Assistent (offert only — no campaign creation).
+ *
+ * Offert semantics: `minutePool = null` means "offert only" — volymen
+ * förhandlas per avtal och är aldrig hårt begränsad i koden.
  */
+
+export type ProductLine = 'outbound' | 'inbound';
+
 export interface TierDefinition {
   tier: SubscriptionTier;
   label: string;
-  priceSekPerMonth: number | null; // null = custom offert via sales
-  dailyMinuteLimit: number | null; // null = bespoke bounds
+  productLine: ProductLine;
+  priceSekPerMonth: number | null; // null = offert via sälj
+  /** Total minute pool per billing period. null = offert only (no hard limit). */
+  minutePool: number | null;
   maxAgents: number | null;
   maxCampaigns: number | null;
   maxNumbers: number | null;
-  /** Quote-based tiers (ENTERPRISE) are never hard-limited in code. */
+  /** Quote-based tiers are never hard-limited in code. */
   quoteBased: boolean;
 }
 
@@ -21,8 +29,10 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
   DELTID: {
     tier: 'DELTID',
     label: 'Deltid',
+    productLine: 'outbound',
     priceSekPerMonth: 11900,
-    dailyMinuteLimit: 75,
+    // TODO: bekräfta poolstorlekar
+    minutePool: 500,
     maxAgents: 1,
     maxCampaigns: 1,
     maxNumbers: 1,
@@ -31,8 +41,10 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
   HELTID: {
     tier: 'HELTID',
     label: 'Heltid (vanligast)',
+    productLine: 'outbound',
     priceSekPerMonth: 19900,
-    dailyMinuteLimit: 150,
+    // TODO: bekräfta poolstorlekar
+    minutePool: 1000,
     maxAgents: 1,
     maxCampaigns: 1,
     maxNumbers: 1,
@@ -41,8 +53,10 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
   TEAM: {
     tier: 'TEAM',
     label: 'Team',
+    productLine: 'outbound',
     priceSekPerMonth: 30900,
-    dailyMinuteLimit: 300,
+    // TODO: bekräfta poolstorlekar
+    minutePool: 2000,
     maxAgents: 2,
     maxCampaigns: 2,
     maxNumbers: 2,
@@ -51,8 +65,31 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierDefinition> = {
   ENTERPRISE: {
     tier: 'ENTERPRISE',
     label: 'Enterprise',
+    productLine: 'outbound',
     priceSekPerMonth: null,
-    dailyMinuteLimit: null,
+    minutePool: null,
+    maxAgents: null,
+    maxCampaigns: null,
+    maxNumbers: null,
+    quoteBased: true
+  },
+  RECEPTIONIST: {
+    tier: 'RECEPTIONIST',
+    label: 'Receptionist',
+    productLine: 'inbound',
+    priceSekPerMonth: null,
+    minutePool: null,
+    maxAgents: null,
+    maxCampaigns: null,
+    maxNumbers: null,
+    quoteBased: true
+  },
+  AI_ASSISTENT: {
+    tier: 'AI_ASSISTENT',
+    label: 'AI-Assistent',
+    productLine: 'inbound',
+    priceSekPerMonth: null,
+    minutePool: null,
     maxAgents: null,
     maxCampaigns: null,
     maxNumbers: null,
@@ -74,17 +111,21 @@ export interface OverageResult {
 }
 
 /**
- * Overage logic: outbound calls are never dropped midway through execution if
- * a quota is depleted. Extra consumption is tracked by the automation engine in
- * PocketBase and displayed on screen as an accrued liability priced at
- * 5,90 kr per minute (exkl. moms).
+ * Overage logic: calls are never dropped midway when the pool is depleted —
+ * extra consumption accrues as a liability priced at 5,90 kr/min (exkl. moms).
+ * Offert tiers (minutePool = null) are display-only — never gated.
  */
 export function computeOverage(minutesUsed: number, tier: TierDefinition): OverageResult {
-  const limit = tier.dailyMinuteLimit;
-  if (limit == null) {
+  const pool = tier.minutePool;
+  if (pool == null) {
     return { overageMinutes: 0, liabilitySek: 0 };
   }
-  const overageMinutes = Math.max(0, minutesUsed - limit);
+  const overageMinutes = Math.max(0, minutesUsed - pool);
   const liabilitySek = Math.round(overageMinutes * OVERAGE_RATE_SEK_PER_MIN * 100) / 100;
   return { overageMinutes, liabilitySek };
+}
+
+/** Inbound packages (Receptionist / AI-Assistent) get no campaign creation. */
+export function canCreateCampaigns(tier: string | undefined | null): boolean {
+  return getTierDefinition(tier).productLine === 'outbound';
 }

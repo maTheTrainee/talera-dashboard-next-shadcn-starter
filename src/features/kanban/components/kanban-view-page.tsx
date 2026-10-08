@@ -1,15 +1,13 @@
 import PageContainer from '@/components/layout/page-container';
-import { KanbanBoard } from './kanban-board';
-import NewTaskDialog from './new-task-dialog';
+import { RealtimeBoard } from './realtime-board';
 
 export default function KanbanViewPage() {
   return (
     <PageContainer
-      pageTitle='Kanban'
-      pageDescription='Manage tasks with drag and drop'
-      pageHeaderAction={<NewTaskDialog />}
+      pageTitle='Realtidsvy'
+      pageDescription='Live-översikt över pågående röstsamtal — korten flyttas automatiskt av systemet.'
     >
-      <KanbanBoard />
+      <RealtimeBoard />
     </PageContainer>
   );
 }

@@ -26,88 +26,72 @@ export default function OverViewLayout({
     <PageContainer>
       <div className='flex flex-1 flex-col gap-4'>
         <div className='flex items-center justify-between'>
-          <h2 className='text-2xl font-bold tracking-tight'>Hi, Welcome back 👋</h2>
+          <h2 className='text-2xl font-bold tracking-tight'>Hej och välkommen tillbaka 👋</h2>
         </div>
 
         <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:grid-cols-4'>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>Total Revenue</CardDescription>
+              <CardDescription>Minuter kvar</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                $1,250.00
+                2 000 min
               </CardTitle>
-              <CardAction>
-                <Badge variant='outline'>
-                  <Icons.trendingUp />
-                  +12.5%
-                </Badge>
-              </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                Trending up this month <Icons.trendingUp className='size-4' />
-              </div>
-              <div className='text-muted-foreground'>Visitors for the last 6 months</div>
+              <div className='line-clamp-1 flex gap-2 font-medium'>i Team-paketet</div>
+              <div className='text-muted-foreground'>Minutpoolen tickar ner per samtal</div>
             </CardFooter>
           </Card>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>New Customers</CardDescription>
+              <CardDescription>Bokade möten</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                1,234
-              </CardTitle>
-              <CardAction>
-                <Badge variant='outline'>
-                  <Icons.trendingDown />
-                  -20%
-                </Badge>
-              </CardAction>
-            </CardHeader>
-            <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                Down 20% this period <Icons.trendingDown className='size-4' />
-              </div>
-              <div className='text-muted-foreground'>Acquisition needs attention</div>
-            </CardFooter>
-          </Card>
-          <Card className='@container/card'>
-            <CardHeader>
-              <CardDescription>Active Accounts</CardDescription>
-              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                45,678
+                23
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
                   <Icons.trendingUp />
-                  +12.5%
+                  +12,5 %
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Strong user retention <Icons.trendingUp className='size-4' />
+                Uppåt denna vecka <Icons.trendingUp className='size-4' />
               </div>
-              <div className='text-muted-foreground'>Engagement exceed targets</div>
+              <div className='text-muted-foreground'>Möten bokade av AI-agenten</div>
             </CardFooter>
           </Card>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>Growth Rate</CardDescription>
+              <CardDescription>Genomförda samtal</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                4.5%
+                412
+              </CardTitle>
+            </CardHeader>
+            <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+              <div className='line-clamp-1 flex gap-2 font-medium'>68 % besvarade</div>
+              <div className='text-muted-foreground'>Samtal denna månad</div>
+            </CardFooter>
+          </Card>
+          <Card className='@container/card'>
+            <CardHeader>
+              <CardDescription>Träffsäkerhet</CardDescription>
+              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+                8,4 %
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
                   <Icons.trendingUp />
-                  +4.5%
+                  +1,2 %
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                Steady performance increase <Icons.trendingUp className='size-4' />
+                Stabil utveckling <Icons.trendingUp className='size-4' />
               </div>
-              <div className='text-muted-foreground'>Meets growth projections</div>
+              <div className='text-muted-foreground'>Bokat möte per genomfört samtal</div>
             </CardFooter>
           </Card>
         </div>

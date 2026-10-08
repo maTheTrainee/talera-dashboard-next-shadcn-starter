@@ -32,8 +32,21 @@ export const columns: ColumnDef<Campaign>[] = [
     id: 'outbound_number',
     accessorKey: 'outbound_number',
     header: ({ column }: { column: Column<Campaign, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Nummer' />
+      <DataTableColumnHeader column={column} title='Utgående nummer' />
     )
+  },
+  {
+    id: 'prospect_count',
+    accessorKey: 'prospect_count',
+    header: ({ column }: { column: Column<Campaign, unknown> }) => (
+      <DataTableColumnHeader column={column} title='Prospekter' />
+    ),
+    cell: ({ cell }) => {
+      const count = cell.getValue<Campaign['prospect_count']>();
+      return (
+        <span className='text-muted-foreground text-sm tabular-nums'>{count ?? 0}</span>
+      );
+    }
   },
   {
     id: 'status',

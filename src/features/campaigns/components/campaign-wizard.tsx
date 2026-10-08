@@ -27,7 +27,10 @@ import { createCampaignMutation } from '../api/mutations';
 import {
   campaignBaseSchema,
   campaignSchema,
+  DIALING_WINDOW_START,
+  DIALING_WINDOW_END,
   MIN_SCHEDULING_WINDOW_HOURS,
+  MAX_SCHEDULING_WINDOW_HOURS,
   normalizePhoneNumber
 } from '../schemas/campaign';
 
@@ -43,7 +46,6 @@ const stepSchemas = [
     .pick({
       scheduled_start: true,
       scheduled_end: true,
-      uv_agent_id: true,
       outbound_number: true,
       max_attempts: true
     })
@@ -59,8 +61,10 @@ const stepSchemas = [
         path: ['scheduled_end']
       }
     ),
-  // Step 3: CSV-uppladdning (valfritt — dropzone + mall)
-  z.object({}),
+  // Step 3: CSV-uppladdning (obligatoriskt — dropzone + mall)
+  z.object({
+    csv_file: z.array(z.unknown()).min(1, 'Ladda upp en kontaktlista (CSV)')
+  }),
   // Step 4: Granska
   z.object({})
 ];
@@ -75,7 +79,6 @@ function ReviewSummary({
     description: string;
     scheduled_start: string;
     scheduled_end: string;
-    uv_agent_id: string;
     outbound_number: string;
     max_attempts?: number;
     csv_file?: File[];
@@ -102,9 +105,10 @@ function ReviewSummary({
           </p>
         </div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase'>Agent / Nummer</p>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>
+            Utgående nummer
+          </p>
           <p className='text-sm'>
-            {values.uv_agent_id || '—'} ·{' '}
             {values.outbound_number ? normalizePhoneNumber(values.outbound_number) : '—'}
           </p>
         </div>
@@ -138,7 +142,6 @@ type WizardFormValues = {
   description: string;
   scheduled_start: string;
   scheduled_end: string;
-  uv_agent_id: string;
   outbound_number: string;
   max_attempts?: number;
   csv_file?: File[];
@@ -172,7 +175,6 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
       description: '',
       scheduled_start: '',
       scheduled_end: '',
-      uv_agent_id: '',
       outbound_number: '',
       max_attempts: 3,
       csv_file: []
@@ -188,7 +190,6 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
         description: value.description,
         scheduled_start: value.scheduled_start,
         scheduled_end: value.scheduled_end,
-        uv_agent_id: value.uv_agent_id,
         outbound_number: normalizePhoneNumber(value.outbound_number),
         max_attempts: value.max_attempts ?? 3
       });
@@ -268,15 +269,22 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
               <FieldGroup className='space-y-4'>
                 <h3 className='text-lg font-semibold'>Schemaläggning</h3>
                 <FieldDescription>
-                  Kampanjen måste spänna minst {MIN_SCHEDULING_WINDOW_HOURS} timmar. Nummer
-                  normaliseras automatiskt (07X ➔ +467X).
+                  Ringfönster: {DIALING_WINDOW_START}–{DIALING_WINDOW_END} · Min{' '}
+                  {MIN_SCHEDULING_WINDOW_HOURS} h · Max {MAX_SCHEDULING_WINDOW_HOURS} h —
+                  kampanjer som når {DIALING_WINDOW_END} avslutas tidigt; automationen sparar
+                  återstående prospekt.
                 </FieldDescription>
 
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <form.AppField
                     name='scheduled_start'
                     children={(field) => (
-                      <field.TextField label='Start' required type='datetime-local' />
+                      <field.TextField
+                        label='Start'
+                        required
+                        type='datetime-local'
+                        min={`${new Date().toISOString().slice(0, 10)}T${DIALING_WINDOW_START}`}
+                      />
                     )}
                   />
                   <form.AppField
@@ -286,13 +294,6 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                     )}
                   />
                 </div>
-
-                <form.AppField
-                  name='uv_agent_id'
-                  children={(field) => (
-                    <field.TextField label='Röstagent-ID' required placeholder='agent_xxx' />
-                  )}
-                />
 
                 <form.AppField
                   name='outbound_number'
@@ -324,8 +325,8 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
               <FieldGroup className='space-y-4'>
                 <h3 className='text-lg font-semibold'>Prospekt-CSV</h3>
                 <FieldDescription>
-                  Ladda ner mallen, fyll i prospekten och släpp filen här. Steget är valfritt —
-                  prospekt kan importeras senare.
+                  Ladda ner mallen, fyll i prospekten och släpp filen här. Steget är
+                  obligatoriskt — prospekten importeras när kampanjen startar.
                 </FieldDescription>
 
                 <div className='flex justify-start'>

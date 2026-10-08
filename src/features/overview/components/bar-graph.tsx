@@ -11,23 +11,23 @@ import {
 } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
+import React from 'react';
 
+// MOCK — kopplas till /api/usage vid wiring-pass (bokningar per vecka).
 const chartData = [
-  { month: 'January', desktop: 186, mobile: 80 },
-  { month: 'February', desktop: 305, mobile: 200 },
-  { month: 'March', desktop: 237, mobile: 120 },
-  { month: 'April', desktop: 73, mobile: 190 },
-  { month: 'May', desktop: 209, mobile: 130 },
-  { month: 'June', desktop: 214, mobile: 140 }
+  { week: 'v38', moeten: 4, uppfoljningar: 9 },
+  { week: 'v39', moeten: 6, uppfoljningar: 12 },
+  { week: 'v40', moeten: 5, uppfoljningar: 11 },
+  { week: 'v41', moeten: 8, uppfoljningar: 15 }
 ];
 
 const chartConfig = {
-  desktop: {
-    label: 'Desktop',
+  moeten: {
+    label: 'Bokade möten',
     color: 'var(--chart-1)'
   },
-  mobile: {
-    label: 'Mobile',
+  uppfoljningar: {
+    label: 'Bokade uppföljningar',
     color: 'var(--chart-2)'
   }
 } satisfies ChartConfig;
@@ -37,13 +37,13 @@ export function BarGraph() {
     <Card>
       <CardHeader>
         <CardTitle>
-          Bar Chart - Multiple
+          Bokningar per vecka
           <Badge variant='outline'>
-            <Icons.trendingDown />
-            -5.2%
+            <Icons.trendingUp />
+            +12,5 %
           </Badge>
         </CardTitle>
-        <CardDescription>January - June 2025</CardDescription>
+        <CardDescription>Bokade möten och uppföljningar — senaste veckorna</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -59,26 +59,25 @@ export function BarGraph() {
               <DottedBackgroundPattern />
             </defs>
             <XAxis
-              dataKey='month'
+              dataKey='week'
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator='dashed' hideLabel />}
             />
             <Bar
-              dataKey='desktop'
+              dataKey='moeten'
               color='var(--chart-1)'
-              fill='var(--color-desktop)'
+              fill='var(--color-moeten)'
               shape={<CustomHatchedBar isHatched={false} />}
               radius={4}
             />
             <Bar
-              dataKey='mobile'
-              fill='var(--color-mobile)'
+              dataKey='uppfoljningar'
+              fill='var(--color-uppfoljningar)'
               shape={<CustomHatchedBar />}
               radius={4}
             />

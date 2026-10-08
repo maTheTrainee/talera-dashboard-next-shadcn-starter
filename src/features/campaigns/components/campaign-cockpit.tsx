@@ -122,12 +122,16 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
                 <p>{new Date(campaign.scheduled_end).toLocaleString('sv-SE')}</p>
               </div>
               <div>
-                <p className='text-muted-foreground text-xs uppercase'>Röstagent</p>
-                <p>{campaign.uv_agent_id}</p>
-              </div>
-              <div>
                 <p className='text-muted-foreground text-xs uppercase'>Utgående nummer</p>
                 <p>{campaign.outbound_number}</p>
+              </div>
+              <div>
+                <p className='text-muted-foreground text-xs uppercase'>Max Kontaktförsök</p>
+                <p>
+                  {(campaign.max_attempts ?? 0) > 0
+                    ? `${campaign.max_attempts} försök`
+                    : 'Obegränsat'}
+                </p>
               </div>
             </CardContent>
           </Card>

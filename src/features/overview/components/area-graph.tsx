@@ -13,28 +13,27 @@ import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
 import React from 'react';
 
+// MOCK — kopplas till /api/usage vid wiring-pass (samtal per dag).
 const chartData = [
-  { month: 'January', desktop: 342, mobile: 245 },
-  { month: 'February', desktop: 876, mobile: 654 },
-  { month: 'March', desktop: 512, mobile: 387 },
-  { month: 'April', desktop: 629, mobile: 521 },
-  { month: 'May', desktop: 458, mobile: 412 },
-  { month: 'June', desktop: 781, mobile: 598 },
-  { month: 'July', desktop: 394, mobile: 312 },
-  { month: 'August', desktop: 925, mobile: 743 },
-  { month: 'September', desktop: 647, mobile: 489 },
-  { month: 'October', desktop: 532, mobile: 476 },
-  { month: 'November', desktop: 803, mobile: 687 },
-  { month: 'December', desktop: 271, mobile: 198 }
+  { day: '22/9', samtal: 186, besvarade: 121 },
+  { day: '23/9', samtal: 305, besvarade: 198 },
+  { day: '24/9', samtal: 237, besvarade: 164 },
+  { day: '25/9', samtal: 173, besvarade: 129 },
+  { day: '26/9', samtal: 209, besvarade: 141 },
+  { day: '29/9', samtal: 254, besvarade: 177 },
+  { day: '30/9', samtal: 312, besvarade: 203 },
+  { day: '1/10', samtal: 288, besvarade: 196 },
+  { day: '2/10', samtal: 341, besvarade: 228 },
+  { day: '3/10', samtal: 296, besvarade: 205 }
 ];
 
 const chartConfig = {
-  desktop: {
-    label: 'Desktop',
+  samtal: {
+    label: 'Samtal',
     color: 'var(--chart-1)'
   },
-  mobile: {
-    label: 'Mobile',
+  besvarade: {
+    label: 'Besvarade',
     color: 'var(--chart-2)'
   }
 } satisfies ChartConfig;
@@ -44,44 +43,43 @@ export function AreaGraph() {
     <Card>
       <CardHeader>
         <CardTitle>
-          Dotted Area Chart
+          Samtal per dag
           <Badge variant='outline'>
             <Icons.trendingUp />
-            -5.2%
+            +8,1 %
           </Badge>
         </CardTitle>
-        <CardDescription>Showing total visitors for the last 6 months</CardDescription>
+        <CardDescription>Genomförda vs besvarade samtal — senaste dagarna</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <AreaChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} strokeDasharray='3 3' />
             <XAxis
-              dataKey='month'
+              dataKey='day'
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <defs>
               <DottedBackgroundPattern config={chartConfig} />
             </defs>
             <Area
-              dataKey='mobile'
+              dataKey='besvarade'
               type='natural'
-              fill='url(#dotted-background-pattern-mobile)'
+              fill='url(#dotted-background-pattern-besvarade)'
               fillOpacity={0.4}
-              stroke='var(--color-mobile)'
+              stroke='var(--color-besvarade)'
               stackId='a'
               strokeWidth={0.8}
             />
             <Area
-              dataKey='desktop'
+              dataKey='samtal'
               type='natural'
-              fill='url(#dotted-background-pattern-desktop)'
+              fill='url(#dotted-background-pattern-samtal)'
               fillOpacity={0.4}
-              stroke='var(--color-desktop)'
+              stroke='var(--color-samtal)'
               stackId='a'
               strokeWidth={0.8}
             />
