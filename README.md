@@ -258,3 +258,54 @@ free react admin dashboard, nextjs 16 dashboard starter, working crud dashboard
 
 -->
 
+
+
+
+#### 🌐 PRODUCTION TECH STACK & DATA PIPELINES (REVISED)
+
+### 1. The Core Infrastructure Matrix
+* **Frontend UI Layer:** Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/ui.
+* **Authentication:** Clerk Auth (utilizing Multi-tenant Clerk Organizations). *NOTE: Clerk Billing features are deferred in this version.*
+* **Primary Database Hub:** PocketBase (SQLite-powered, isolated behind Tailscale or shared Docker nets).
+* **Automation Matrix:** n8n Workflow Engine (interfacing via the native `n8n-nodes-pocketbase-admin` Node).
+* **Voice AI Kernel:** Ultravox Realtime Voice Engine (WebRTC browser streaming via the client-side SDK). All calling pipelines, batch campaign scheduling, tool executions, and post-call data summaries are managed purely inside n8n.
+
+### 2. The Hybrid Routing Rule (Dev vs Production)
+To keep page loads snappy, we split our data traffic into two independent highways:
+* **The Read/Write Highway:** Next.js connects DIRECTLY to PocketBase via server-side utilities for ultra-low latency dashboard rendering and database mutations.
+* **The Voice/Automation Highway:** n8n operates in the background, consuming Ultravox lifecycle webhooks and executing batch campaigns using its native PocketBase Admin Node to manipulate database states.
+
+### 3. Network Environment Gateway Rules (`src/lib/pb.ts`)
+The server data pipelines must dynamically adjust their base connection paths depending on the isolated environment variables:
+* **DEVELOPMENT MODE (`process.env.NODE_ENV !== 'production'`):** Next.js communicates with PocketBase via our secure Tailscale MagicDNS bridge route: `http://kallare-server:8080`.
+* **PRODUCTION MODE (`process.env.NODE_ENV === 'production'`):** Next.js routes data requests directly over the private internal Docker container network hook inside Coolify: `http://pocketbase:8080`.
+
+### 4. Product Packages & Feature Gating Schemas (B2B SEK Pricing)
+Account capabilities, layout structures, and permission filters are evaluated dynamically via custom subscription metadata stored natively in the PocketBase `users` collection:
+
+#### Outbound Campaign Models:
+* **DELTID:** 11 900 kr/mån | Quota: **75 minutes/day limit** | Limits: 1 Voice Agent, 1 Active Campaign, 1 Outbound Number.
+* **HELTID:** 19 900 kr/mån | Quota: **150 minutes/day limit** | Limits: 1 Voice Agent, 1 Active Campaign, 1 Outbound Number.
+* **TEAM:** 30 900 kr/mån | Quota: **300 minutes/day limit** | Limits: 2 Voice Agents, 2 Active Campaigns, 2 Outbound Numbers.
+* **ENTERPRISE:** Bespoke custom offer tier.
+* **Overage Logic:** Outbound campaigns are never dropped midway through execution if a quota is depleted. Extra consumption records are tracked by n8n in PocketBase and displayed on screen as an accrued liability priced at **5,90 kr per minute** (exkl. moms).
+
+#### Inbound Agent Models:
+* **RECEPTIONIST:** Handles standard external client-facing inbound audio routes.
+* **INTERNSUPPORT / AI-ASSISTENT:** Secure, browser-based internal operational manual lookup guide for frontline employees.
+
+### 5. Airtight Browser WebRTC Security Flow
+To guard our backend infrastructure, the frontend client application running in user browsers must **never** hold, read, or pass our master Ultravox API keys. 
+1. When an employee clicks to call the **"Ring AI-Assistent"** module, the frontend fires a request to our server: `POST /api/assist/session`.
+2. The Server Route uses Clerk User-Level authorization (`await auth()`) to confirm the specific individual is signed in and possesses active group membership rights to touch the internal knowledge base.
+3. If validated, the server routes an execution query over to n8n (`POST /webhook/dashboard-api` with action `start.web.session`), which creates the token via the Ultravox API, and replies with the temporary, single-use, short-lived WebRTC connection URL token (`joinUrl`).
+4. The frontend browser initializes the `ultravox-client` SDK using only this single-use `joinUrl`.
+
+### 6. Multi-Tenant Navigation Tree Sequence
+1. **Översikt (Overview):** Daily quota progress indicators and dynamic overage cards.
+2. **Ringkampanjer (Campaigns):** Configuration forms enforcing a **strict 4-hour minimum scheduling window** and automated regex string phone number cleaning (`07X` ➔ `+467X`).
+3. **Kontaktlistor (Users/Leads):** CRM table tracking prospect dialing states. Features clickable hyperlinks routing to `/dashboard/chat?callId=[ID]`.
+4. **Realtidsvy (Kanban):** Progress boards displaying live voice cycles: `I kö` ➔ `Ringer` ➔ `I samtal` ➔ `Avslutat`.
+5. **Samtalshistorik (Chat/Transcripts):** Historic split-screen speech bubble logs and n8n-generated text summaries.
+6. **Ring AI-Assistent:** Operator full-screen workspace. If a non-admin account logs in, the navigation sidebar completely purges elements 1 through 5, pinning this view as their absolute standalone workspace interface.
+7. **AI Chat (Buffered):** The template's default script-based useChat streaming component remains fully compiled in the system layout, but its routing visibility flag is explicitly set to `hidden` in the sidebar config array. It is unavailable to general profiles, reserved for a future feature release (SaaS Status Reporting Agent).
