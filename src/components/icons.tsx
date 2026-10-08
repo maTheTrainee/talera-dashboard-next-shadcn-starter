@@ -31,6 +31,7 @@ import {
   IconDeviceLaptop,
   IconDots,
   IconDotsVertical,
+  IconDownload,
   IconEdit,
   IconExternalLink,
   IconEyeOff,
@@ -53,6 +54,7 @@ import {
   IconLogin,
   IconLogout,
   IconMessage,
+  IconMicrophone,
   IconMinus,
   IconMoon,
   IconMusic,
@@ -104,6 +106,7 @@ export const Icons = {
   clock: IconClock,
   code: IconCode,
   dots: IconDots,
+  download: IconDownload,
   ellipsis: IconDotsVertical,
   externalLink: IconExternalLink,
   help: IconHelpCircle,
@@ -158,6 +161,7 @@ export const Icons = {
   fileTypeXls: IconFileTypeXls,
   fileZip: IconFileZip,
   media: IconPhoto,
+  mic: IconMicrophone,
   music: IconMusic,
 
   // Actions

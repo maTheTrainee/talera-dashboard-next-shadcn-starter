@@ -1,50 +1,77 @@
 import { NavGroup } from '@/types';
 
 /**
- * Navigation configuration with RBAC support
+ * Talera navigation — the multi-tenant tree.
  *
- * This configuration is used for both the sidebar navigation and Cmd+K bar.
- * Items are organized into groups, each rendered with a SidebarGroupLabel.
- *
- * RBAC Access Control:
- * Each navigation item can have an `access` property that controls visibility
- * based on permissions, plans, features, roles, and organization context.
- *
- * Examples:
- *
- * 1. Require organization:
- *    access: { requireOrg: true }
- *
- * 2. Require specific permission:
- *    access: { requireOrg: true, permission: 'org:teams:manage' }
- *
- * 3. Require specific plan:
- *    access: { plan: 'pro' }
- *
- * 4. Require specific feature:
- *    access: { feature: 'premium_access' }
- *
- * 5. Require specific role:
- *    access: { role: 'admin' }
- *
- * 6. Multiple conditions (all must be true):
- *    access: { requireOrg: true, permission: 'org:teams:manage', plan: 'pro' }
- *
- * Note: The `hidden` property keeps an item compiled in the build but removes
- * it from the sidebar and Cmd+K bar (used by the buffered AI Chat feature).
+ * RBAC: items 1–5 carry `access: { role: 'org:admin' }` — non-admin operator
+ * accounts see ONLY "Ring AI-Assistent" (pinned as their standalone workspace).
+ * The `hidden` property keeps AI Chat fully compiled in the build but removes
+ * it from the sidebar and Cmd+K bar (reserved for a future admin status bot).
  */
 export const navGroups: NavGroup[] = [
   {
-    label: 'Overview',
+    label: 'Översikt',
     items: [
       {
-        title: 'Dashboard',
+        title: 'Översikt',
         url: '/dashboard/overview',
         icon: 'dashboard',
         isActive: false,
-        shortcut: ['d', 'd'],
+        items: [],
+        access: { role: 'org:admin' }
+      },
+      {
+        title: 'Ringkampanjer',
+        url: '/dashboard/campaigns',
+        icon: 'send',
+        isActive: false,
+        items: [],
+        access: { role: 'org:admin' }
+      },
+      {
+        title: 'Kontaktlistor',
+        url: '/dashboard/contacts',
+        icon: 'teams',
+        isActive: false,
+        items: [],
+        access: { role: 'org:admin' }
+      },
+      {
+        title: 'Realtidsvy',
+        url: '/dashboard/kanban',
+        icon: 'kanban',
+        isActive: false,
+        items: [],
+        access: { role: 'org:admin' }
+      },
+      {
+        title: 'Samtalshistorik',
+        url: '/dashboard/chat',
+        icon: 'chat',
+        isActive: false,
+        items: [],
+        access: { role: 'org:admin' }
+      },
+      {
+        title: 'Ring AI-Assistent',
+        url: '/dashboard/assist',
+        icon: 'phone',
+        isActive: false,
         items: []
       },
+      {
+        title: 'AI Chat',
+        url: '/dashboard/ai-chat',
+        icon: 'sparkles',
+        isActive: false,
+        hidden: true,
+        items: []
+      }
+    ]
+  },
+  {
+    label: '',
+    items: [
       {
         title: 'Workspaces',
         url: '/dashboard/workspaces',
@@ -60,44 +87,6 @@ export const navGroups: NavGroup[] = [
         items: [],
         access: { requireOrg: true }
       },
-      {
-        title: 'Users',
-        url: '/dashboard/users',
-        icon: 'teams',
-        shortcut: ['u', 'u'],
-        isActive: false,
-        items: []
-      },
-      {
-        title: 'Kanban',
-        url: '/dashboard/kanban',
-        icon: 'kanban',
-        shortcut: ['k', 'k'],
-        isActive: false,
-        items: []
-      },
-      {
-        title: 'Chat',
-        url: '/dashboard/chat',
-        icon: 'chat',
-        shortcut: ['c', 'c'],
-        isActive: false,
-        items: []
-      },
-      {
-        title: 'AI Chat',
-        url: '/dashboard/ai-chat',
-        icon: 'sparkles',
-        shortcut: ['a', 'i'],
-        isActive: false,
-        hidden: true,
-        items: []
-      }
-    ]
-  },
-  {
-    label: '',
-    items: [
       {
         title: 'Account',
         url: '#',
