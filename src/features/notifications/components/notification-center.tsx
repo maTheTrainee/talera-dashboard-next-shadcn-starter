@@ -14,8 +14,8 @@ const MAX_VISIBLE = 5;
 
 const actionRoutes: Record<string, string> = {
   view: '/dashboard/workspaces',
-  'view-product': '/dashboard/product',
-  billing: '/dashboard/billing',
+  'view-product': '/dashboard/overview',
+  billing: '/dashboard/overview',
   open: '/dashboard/kanban',
   'open-chat': '/dashboard/chat'
 };

@@ -49,6 +49,12 @@ export function useFilteredNavItems(items: NavItem[]) {
   const filteredItems = useMemo(() => {
     return items
       .filter((item) => {
+        // Hidden items stay compiled in the build but never render in nav —
+        // both the sidebar and the Cmd+K kbar consume this filter.
+        if (item.hidden) {
+          return false;
+        }
+
         // No access restrictions
         if (!item.access) {
           return true;
@@ -102,6 +108,11 @@ export function useFilteredNavItems(items: NavItem[]) {
         // Recursively filter child items
         if (item.items && item.items.length > 0) {
           const filteredChildren = item.items.filter((childItem) => {
+            // Hidden child items are filtered out the same way
+            if (childItem.hidden) {
+              return false;
+            }
+
             // No access restrictions
             if (!childItem.access) {
               return true;

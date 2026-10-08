@@ -30,8 +30,8 @@ import { NavGroup } from '@/types';
  * 6. Multiple conditions (all must be true):
  *    access: { requireOrg: true, permission: 'org:teams:manage', plan: 'pro' }
  *
- * Note: The `visible` function is deprecated but still supported for backward compatibility.
- * Use the `access` property for new items.
+ * Note: The `hidden` property keeps an item compiled in the build but removes
+ * it from the sidebar and Cmd+K bar (used by the buffered AI Chat feature).
  */
 export const navGroups: NavGroup[] = [
   {
@@ -59,14 +59,6 @@ export const navGroups: NavGroup[] = [
         isActive: false,
         items: [],
         access: { requireOrg: true }
-      },
-      {
-        title: 'Product',
-        url: '/dashboard/product',
-        icon: 'product',
-        shortcut: ['p', 'p'],
-        isActive: false,
-        items: []
       },
       {
         title: 'Users',
@@ -98,54 +90,7 @@ export const navGroups: NavGroup[] = [
         icon: 'sparkles',
         shortcut: ['a', 'i'],
         isActive: false,
-        items: []
-      }
-    ]
-  },
-  {
-    label: 'Elements',
-    items: [
-      {
-        title: 'Forms',
-        url: '#',
-        icon: 'forms',
-        isActive: true,
-        items: [
-          {
-            title: 'Basic Form',
-            url: '/dashboard/forms/basic',
-            icon: 'forms',
-            shortcut: ['f', 'f']
-          },
-          {
-            title: 'Multi-Step Form',
-            url: '/dashboard/forms/multi-step',
-            icon: 'forms'
-          },
-          {
-            title: 'Sheet & Dialog',
-            url: '/dashboard/forms/sheet-form',
-            icon: 'forms'
-          },
-          {
-            title: 'Advanced Patterns',
-            url: '/dashboard/forms/advanced',
-            icon: 'forms'
-          }
-        ]
-      },
-      {
-        title: 'React Query',
-        url: '/dashboard/react-query',
-        icon: 'code',
-        isActive: false,
-        items: []
-      },
-      {
-        title: 'Icons',
-        url: '/dashboard/elements/icons',
-        icon: 'palette',
-        isActive: false,
+        hidden: true,
         items: []
       }
     ]
@@ -153,20 +98,6 @@ export const navGroups: NavGroup[] = [
   {
     label: '',
     items: [
-      {
-        title: 'Pro',
-        url: '#',
-        icon: 'pro',
-        isActive: false,
-        items: [
-          {
-            title: 'Exclusive',
-            url: '/dashboard/exclusive',
-            icon: 'exclusive',
-            shortcut: ['e', 'e']
-          }
-        ]
-      },
       {
         title: 'Account',
         url: '#',
@@ -184,13 +115,6 @@ export const navGroups: NavGroup[] = [
             url: '/dashboard/notifications',
             icon: 'notification',
             shortcut: ['n', 'n']
-          },
-          {
-            title: 'Billing',
-            url: '/dashboard/billing',
-            icon: 'billing',
-            shortcut: ['b', 'b'],
-            access: { requireOrg: true }
           },
           {
             title: 'Login',
