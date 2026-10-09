@@ -32,9 +32,17 @@ export async function GET(request: NextRequest) {
 
     let filter = 'clerk_org_id = {:orgId}';
     const filterParams: Record<string, string> = { orgId };
+    // Multi-select filter arrives comma-separated (nuqs arrays) — OR-chain.
     if (status) {
-      filter += ' && status = {:status}';
-      filterParams.status = status;
+      const statuses = status.split(',').filter(Boolean);
+      if (statuses.length > 0) {
+        filter += ` && (${statuses
+          .map((_, i) => `status = {:status${i}}`)
+          .join(' || ')})`;
+        statuses.forEach((s, i) => {
+          filterParams[`status${i}`] = s;
+        });
+      }
     }
     if (search) {
       filter += ' && name ~ {:search}';

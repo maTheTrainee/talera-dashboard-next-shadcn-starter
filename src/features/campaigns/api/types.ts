@@ -47,6 +47,8 @@ export interface CampaignProspect {
   phone: string;
   status: ProspectStatus;
   call_outcome: string | null;
+  /** Senaste samtalets n8n-sammanfattning (n8n skriver efter varje samtal). */
+  call_summary: string | null;
   /** Företagsnamn — helps operators recall the company behind the contact. */
   company: string | null;
   /** Organisationsnummer — the Swedish company identification number. */
@@ -80,7 +82,7 @@ export interface CampaignCall {
 export type CampaignFilters = {
   page?: number;
   limit?: number;
-  status?: string;
+  status?: string | string[];
   search?: string;
   sort?: string;
 };

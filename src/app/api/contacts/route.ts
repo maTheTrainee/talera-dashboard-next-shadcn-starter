@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const page = Number(sp.get('page') ?? 1) || 1;
   const limit = Number(sp.get('limit') ?? 10) || 10;
   const status = sp.get('status');
+  const campaign = sp.get('campaign');
   const search = sp.get('search');
   const sort = sp.get('sort') ?? '-updated';
 
@@ -25,9 +26,28 @@ export async function GET(request: NextRequest) {
 
     let filter = 'clerk_org_id = {:orgId}';
     const filterParams: Record<string, string> = { orgId };
+    // Multi-select filters arrive comma-separated (nuqs arrays) — OR-chains.
     if (status) {
-      filter += ' && status = {:status}';
-      filterParams.status = status;
+      const statuses = status.split(',').filter(Boolean);
+      if (statuses.length > 0) {
+        filter += ` && (${statuses
+          .map((_, i) => `status = {:status${i}}`)
+          .join(' || ')})`;
+        statuses.forEach((s, i) => {
+          filterParams[`status${i}`] = s;
+        });
+      }
+    }
+    if (campaign) {
+      const campaigns = campaign.split(',').filter(Boolean);
+      if (campaigns.length > 0) {
+        filter += ` && (${campaigns
+          .map((_, i) => `campaign = {:campaign${i}}`)
+          .join(' || ')})`;
+        campaigns.forEach((c, i) => {
+          filterParams[`campaign${i}`] = c;
+        });
+      }
     }
     if (search) {
       filter += ' && (first_name ~ {:search} || last_name ~ {:search} || phone ~ {:search})';
@@ -36,11 +56,21 @@ export async function GET(request: NextRequest) {
 
     const resultList = await pb.collection('contacts').getList(page, limit, {
       filter: pb.filter(filter, filterParams),
-      sort
+      sort,
+      expand: 'campaign'
+    });
+
+    // Kampanjnamn expanderas server-side — ingen extra klientfråga.
+    const items: Contact[] = resultList.items.map((raw) => {
+      const contact = raw as unknown as Contact;
+      const expand = (
+        raw as unknown as { expand?: { campaign?: { name?: string } | null } }
+      ).expand;
+      return { ...contact, campaign_name: expand?.campaign?.name ?? null };
     });
 
     const response: ContactsResponse = {
-      items: resultList.items as unknown as Contact[],
+      items,
       total_items: resultList.totalItems
     };
     return NextResponse.json(response);

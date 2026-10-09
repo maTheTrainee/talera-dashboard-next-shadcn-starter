@@ -140,6 +140,7 @@ const contacts = await ensureCollection({
       ]
     },
     { name: 'call_outcome', type: 'text' },
+    { name: 'call_summary', type: 'text' },
     { name: 'follow_up_at', type: 'date' },
     { name: 'contact_attempts', type: 'number', min: 0 },
     { name: 'last_contacted_at', type: 'date' },
@@ -270,7 +271,8 @@ const contactFieldNames = new Set(
 );
 const contactAdditions = [
   { name: 'company', type: 'text' },
-  { name: 'org_number', type: 'text' }
+  { name: 'org_number', type: 'text' },
+  { name: 'call_summary', type: 'text' }
 ].filter((f) => !contactFieldNames.has(f.name));
 if (contactAdditions.length > 0) {
   await pb.collections.update('contacts', {

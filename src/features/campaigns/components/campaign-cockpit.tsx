@@ -220,12 +220,12 @@ function getProspectColumns(
       }
     },
     {
-      id: 'call_outcome',
-      accessorKey: 'call_outcome',
-      header: 'Utdata',
+      id: 'call_summary',
+      accessorKey: 'call_summary',
+      header: 'Sammanfattning',
       cell: ({ cell }) => (
-        <span className='text-muted-foreground text-sm'>
-          {cell.getValue<CampaignProspect['call_outcome']>() ?? '—'}
+        <span className='text-muted-foreground line-clamp-2 block max-w-[220px] text-sm'>
+          {cell.getValue<CampaignProspect['call_summary']>() ?? '—'}
         </span>
       )
     },

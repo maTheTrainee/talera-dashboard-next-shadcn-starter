@@ -75,7 +75,8 @@ extension only).
 | `company` | text | Företagsnamn — the lead's company |
 | `org_number` | text | **The LEAD's** Swedish organisationsnummer — business data, never a tenant key |
 | `status` | select (req) | `ny` / `i_ko` / `ringer` / `i_samtal` / `avslutat` / `ej_svar` / **`uppföljning`** / **`max_försök`** |
-| `call_outcome` | text | Written by n8n post-call |
+| `call_outcome` | text | Written by n8n post-call (future outcome-category charts) |
+| `call_summary` | text | Senaste samtalets n8n-sammanfattning — powers the Sammanfattning column in Kontaktlistor + cockpit + popup |
 | `follow_up_at` | date | "Uppföljning 2026-05-03 15:30" — when the agent will call back |
 | `contact_attempts` | number ≥0 | Every dial attempt (n8n-maintained, read-only from the app) |
 | `last_contacted_at` | date | Any attempt |
@@ -160,7 +161,7 @@ Post-call (every call lifecycle webhook):
   create calls row (clerk_org_id ← inherited from the campaign, call_type,
                     call_id, transcript, summary, duration_seconds)
   update contact:
-    call_id, contact_attempts + 1, last_contacted_at
+    call_id, call_summary, contact_attempts + 1, last_contacted_at
     conversation?  → last_conversation_at
     booked follow-up? → status = 'uppföljning' + follow_up_at
     no answer && attempts >= max && !follow_up_at → status = 'max_försök'

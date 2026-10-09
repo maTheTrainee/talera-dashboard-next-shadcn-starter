@@ -5,6 +5,8 @@ export interface Contact {
   /** Clerk-användarens id — vem som skapade kontakten (audit). */
   created_by: string | null;
   campaign_id: string | null;
+  /** Kampanjens namn — expanderas server-side av /api/contacts (relation). */
+  campaign_name?: string | null;
   /** Engine call id (uv) written back by n8n after each completed call. */
   call_id: string | null;
   first_name: string;
@@ -20,6 +22,8 @@ export interface Contact {
   org_number: string | null;
   status: string;
   call_outcome: string | null;
+  /** Senaste samtalets n8n-sammanfattning (n8n skriver efter varje samtal). */
+  call_summary: string | null;
   /** "Uppföljning 2026-05-03 15:30" — when the agent will call back. */
   follow_up_at: string | null;
   /** Every dial attempt (n8n-maintained, read-only from the app). */
@@ -34,7 +38,8 @@ export type ContactFilters = {
   page?: number;
   limit?: number;
   search?: string;
-  status?: string;
+  status?: string | string[];
+  campaign?: string | string[];
   sort?: string;
 };
 

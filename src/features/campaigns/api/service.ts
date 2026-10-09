@@ -20,7 +20,12 @@ function toQueryString(filters: CampaignFilters): string {
   const params = new URLSearchParams();
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
-  if (filters.status) params.set('status', filters.status);
+  // Multi-select arrays are comma-joined into one param (nuqs convention —
+  // the API route splits on ',').
+  if (filters.status) {
+    const statuses = Array.isArray(filters.status) ? filters.status : [filters.status];
+    if (statuses.length > 0) params.set('status', statuses.join(','));
+  }
   if (filters.search) params.set('search', filters.search);
   if (filters.sort) params.set('sort', filters.sort);
   const qs = params.toString();

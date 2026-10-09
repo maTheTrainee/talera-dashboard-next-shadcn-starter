@@ -3,20 +3,40 @@
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableToolbar } from '@/components/ui/table/data-table-toolbar';
 import { useDataTable } from '@/hooks/use-data-table';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  parseAsArrayOf,
+  parseAsInteger,
+  parseAsString,
+  useQueryStates
+} from 'nuqs';
+import * as React from 'react';
 import { getSortingStateParser } from '@/lib/parsers';
 import { contactsQueryOptions } from '../../api/queries';
-import { columns } from './columns';
-
-const columnIds = columns.map((c) => c.id).filter(Boolean) as string[];
+import { campaignsQueryOptions } from '@/features/campaigns/api/queries';
+import { getColumns, type CampaignFilterOption } from './columns';
 
 export function ContactsTable() {
+  // Kampanjoptions — the tenant's campaigns drive the Kampanj column + filter.
+  // Empty (inbound-only tenants) = the column is dropped entirely.
+  const { data: campaignsData } = useQuery(campaignsQueryOptions({ limit: 50 }));
+  const campaignOptions = React.useMemo<CampaignFilterOption[]>(
+    () =>
+      (campaignsData?.items ?? [])
+        .map((c) => ({ value: c.id, label: c.name }))
+        .sort((a, b) => a.label.localeCompare(b.label, 'sv')),
+    [campaignsData]
+  );
+
+  const columns = React.useMemo(() => getColumns(campaignOptions), [campaignOptions]);
+  const columnIds = columns.map((c) => c.id).filter(Boolean) as string[];
+
   const [params] = useQueryStates({
     page: parseAsInteger.withDefault(1),
     perPage: parseAsInteger.withDefault(10),
     name: parseAsString,
-    status: parseAsString,
+    status: parseAsArrayOf(parseAsString),
+    campaign: parseAsArrayOf(parseAsString),
     sort: getSortingStateParser(columnIds).withDefault([])
   });
 
@@ -24,7 +44,8 @@ export function ContactsTable() {
     page: params.page,
     limit: params.perPage,
     ...(params.name && { search: params.name }),
-    ...(params.status && { status: params.status }),
+    ...(params.status?.length && { status: params.status }),
+    ...(params.campaign?.length && { campaign: params.campaign }),
     ...(params.sort.length > 0 && { sort: JSON.stringify(params.sort) })
   };
 
