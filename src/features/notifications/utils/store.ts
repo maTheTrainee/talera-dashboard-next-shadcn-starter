@@ -32,7 +32,8 @@ const mockNotifications: Notification[] = [
         id: 'view',
         label: 'Visa kontakt',
         type: 'redirect',
-        style: 'primary'
+        style: 'primary',
+        route: '/dashboard/contacts'
       }
     ]
   },
@@ -47,7 +48,8 @@ const mockNotifications: Notification[] = [
         id: 'view-product',
         label: 'Visa kontaktlista',
         type: 'redirect',
-        style: 'primary'
+        style: 'primary',
+        route: '/dashboard/contacts'
       }
     ]
   },
@@ -62,7 +64,8 @@ const mockNotifications: Notification[] = [
         id: 'billing',
         label: 'Visa Realtidsvy',
         type: 'redirect',
-        style: 'primary'
+        style: 'primary',
+        route: '/dashboard/kanban'
       }
     ]
   },
@@ -77,7 +80,8 @@ const mockNotifications: Notification[] = [
         id: 'open',
         label: 'Öppna Realtidsvy',
         type: 'redirect',
-        style: 'primary'
+        style: 'primary',
+        route: '/dashboard/kanban'
       }
     ]
   },
@@ -92,7 +96,8 @@ const mockNotifications: Notification[] = [
         id: 'open-chat',
         label: 'Visa Översikt',
         type: 'redirect',
-        style: 'primary'
+        style: 'primary',
+        route: '/dashboard/overview'
       }
     ]
   }

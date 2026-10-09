@@ -106,7 +106,7 @@ export const navGroups: NavGroup[] = [
             shortcut: ['m', 'm']
           },
           {
-            title: 'Notifications',
+            title: 'Notiser',
             url: '/dashboard/notifications',
             icon: 'notification',
             shortcut: ['n', 'n']

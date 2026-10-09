@@ -14,6 +14,8 @@ export interface NotificationAction {
   type: ActionType;
   style?: ActionStyle;
   executed?: boolean;
+  /** Where a redirect action navigates (self-describing — no consumer-side map). */
+  route?: string;
 }
 
 export interface NotificationCardProps {
@@ -40,6 +42,7 @@ const formatDate = (date: string | Date): string => {
   if (diffMins < 1) return 'Precis nu';
   if (diffMins < 60) return `${diffMins} min sedan`;
   if (diffHours < 24) return `${diffHours} h sedan`;
+  if (diffDays === 1) return '1 dag sedan';
   if (diffDays < 7) return `${diffDays} dagar sedan`;
 
   return d.toLocaleDateString('sv-SE', {
@@ -123,7 +126,7 @@ export const NotificationCard: FC<NotificationCardProps> = ({
                 'rounded-lg p-1.5 transition-colors',
                 'text-muted-foreground hover:bg-accent hover:text-foreground'
               )}
-              aria-label='Mark as read'
+              aria-label='Markera som läst'
             >
               <Icons.check size={16} />
             </button>

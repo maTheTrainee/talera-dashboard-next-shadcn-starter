@@ -8,14 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter } from 'next/navigation';
 import { useNotificationStore } from '../utils/store';
 
-const actionRoutes: Record<string, string> = {
-  view: '/dashboard/workspaces',
-  'view-product': '/dashboard/overview',
-  billing: '/dashboard/overview',
-  open: '/dashboard/kanban',
-  'open-chat': '/dashboard/chat'
-};
-
 export default function NotificationsPage() {
   const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotificationStore();
   const router = useRouter();
@@ -29,7 +21,7 @@ export default function NotificationsPage() {
       return (
         <div className='flex flex-col items-center justify-center py-16'>
           <Icons.notification className='text-muted-foreground/40 mb-3 h-10 w-10' />
-          <p className='text-muted-foreground text-sm'>No notifications</p>
+          <p className='text-muted-foreground text-sm'>Inga notiser</p>
         </div>
       );
     }
@@ -47,10 +39,12 @@ export default function NotificationsPage() {
             actions={notification.actions}
             onMarkAsRead={markAsRead}
             onAction={(notifId, actionId) => {
-              const route = actionRoutes[actionId];
-              if (route) {
+              // Redirects are self-describing (action.route) — no consumer map.
+              const notification = notifications.find((n) => n.id === notifId);
+              const action = notification?.actions?.find((a) => a.id === actionId);
+              if (action?.route) {
                 markAsRead(notifId);
-                router.push(route);
+                router.push(action.route);
               }
             }}
           />
@@ -61,21 +55,21 @@ export default function NotificationsPage() {
 
   return (
     <PageContainer
-      pageTitle='Notifications'
-      pageDescription='View and manage all your notifications.'
+      pageTitle='Notiser'
+      pageDescription='Se och hantera dina notiser.'
       pageHeaderAction={
         count > 0 ? (
           <Button variant='outline' size='sm' onClick={markAllAsRead}>
-            Mark all as read
+            Markera alla som lästa
           </Button>
         ) : undefined
       }
     >
       <Tabs defaultValue='all'>
         <TabsList>
-          <TabsTrigger value='all'>All ({notifications.length})</TabsTrigger>
-          <TabsTrigger value='unread'>Unread ({unreadNotifications.length})</TabsTrigger>
-          <TabsTrigger value='read'>Read ({readNotifications.length})</TabsTrigger>
+          <TabsTrigger value='all'>Alla ({notifications.length})</TabsTrigger>
+          <TabsTrigger value='unread'>Olästa ({unreadNotifications.length})</TabsTrigger>
+          <TabsTrigger value='read'>Lästa ({readNotifications.length})</TabsTrigger>
         </TabsList>
         <TabsContent value='all' className='mt-4'>
           {renderList(notifications)}
