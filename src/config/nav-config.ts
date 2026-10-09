@@ -29,7 +29,7 @@ export const navGroups: NavGroup[] = [
         access: { role: 'org:admin' }
       },
       {
-        title: 'Kontaktlistor',
+        title: 'Kontakter',
         url: '/dashboard/contacts',
         icon: 'teams',
         isActive: false,

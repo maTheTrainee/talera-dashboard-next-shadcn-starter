@@ -58,7 +58,7 @@ export function CampaignProspectsDialog({
         <DialogHeader>
           <DialogTitle>{campaign?.name ?? 'Kampanj'}</DialogTitle>
           <DialogDescription>
-            Prospekter kopplade till kampanjen — samma vy som Kontaktlistor.
+            Prospekter kopplade till kampanjen — samma vy som Kontakter.
           </DialogDescription>
         </DialogHeader>
 
@@ -128,12 +128,12 @@ export function CampaignProspectsDialog({
               render={
                 <a
                   href={`/dashboard/contacts?campaign=${campaign?.id ?? ''}`}
-                  aria-label='Öppna kampanjen i Kontaktlistor'
+                  aria-label='Öppna kampanjen i Kontakter'
                 />
               }
               nativeButton={false}
             >
-              <Icons.externalLink className='mr-2 h-4 w-4' /> Öppna i Kontaktlistor
+              <Icons.externalLink className='mr-2 h-4 w-4' /> Öppna i Kontakter
             </Button>
             <Button variant='outline' onClick={onClose}>
               <Icons.close className='mr-2 h-4 w-4' /> Stäng

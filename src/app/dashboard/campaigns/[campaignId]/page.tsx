@@ -19,7 +19,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
   return (
     <PageContainer
       pageTitle='Kampanj-Cockpit'
-      pageDescription='Masterstatus, prospekt och samtalstranskript — synkat med databasen.'
+      pageDescription='Masterstatus, prospekt och samtalstranskript.'
     >
       <Suspense fallback={<CampaignCockpitSkeleton />}>
         <CampaignCockpit campaignId={campaignId} />

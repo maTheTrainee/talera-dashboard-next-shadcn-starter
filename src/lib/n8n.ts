@@ -16,6 +16,15 @@ export async function dispatchToN8n<TPayload, TResponse = unknown>(
   tenant: TenantMetadata,
   payload: TPayload
 ): Promise<TResponse> {
+  // Fail closed: without the webhook URL or the shared secret the envelope
+  // would go out unauthenticated — refuse rather than dispatch open. The n8n
+  // webhook MUST validate the X-Talera-Secret header (see the launch checklist).
+  if (!N8N_WEBHOOK_URL || !process.env.N8N_WEBHOOK_SECRET) {
+    throw new Error(
+      'n8n-dispatch konfigureras inte — N8N_WEBHOOK_URL/N8N_WEBHOOK_SECRET saknas.'
+    );
+  }
+
   const envelope: N8nEnvelope<TPayload> = { action, tenant, payload };
 
   const res = await fetch(N8N_WEBHOOK_URL, {

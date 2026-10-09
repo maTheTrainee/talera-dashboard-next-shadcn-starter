@@ -19,7 +19,7 @@ export default async function CampaignsPage(props: PageProps) {
   return (
     <PageContainer
       pageTitle='Ringkampanjer'
-      pageDescription='Konfigurera och övervaka utgående röstkampanjer (minst 4 timmars schemafönster).'
+      pageDescription='Konfigurera och övervaka utgående röstkampanjer.'
       pageHeaderAction={<CampaignWizardTrigger />}
     >
       <CampaignListingPage />

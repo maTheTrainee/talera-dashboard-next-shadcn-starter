@@ -22,7 +22,11 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     const record = await pb.collection('calls').getOne(callId);
 
     if (record.clerk_org_id !== orgId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      // 404 — cross-tenant id probes must not reveal that the record exists.
+      return NextResponse.json(
+        { error: 'Samtalet hittades inte.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(record as unknown as CampaignCall);

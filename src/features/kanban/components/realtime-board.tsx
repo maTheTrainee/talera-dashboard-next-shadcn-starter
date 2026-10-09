@@ -57,11 +57,8 @@ export function RealtimeBoard() {
       <div className='flex items-center gap-2'>
         <Badge variant='secondary' className='gap-1.5'>
           <Icons.spinner className='size-3 animate-spin' />
-          Uppdateras automatiskt — förhandsvisning
+          Uppdateras automatiskt
         </Badge>
-        <span className='text-muted-foreground text-xs'>
-          Systemet flyttar korten — ingen dragning.
-        </span>
       </div>
       <div className='grid w-full grid-cols-1 gap-4 overflow-x-auto rounded-md pb-4 md:grid-cols-4'>
         {BOARD_COLUMNS.map((column) => {

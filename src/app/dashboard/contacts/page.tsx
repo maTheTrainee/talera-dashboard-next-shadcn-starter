@@ -7,7 +7,7 @@ import { ContactFormSheetTrigger } from '@/features/contacts/components/contact-
 import { CsvTemplateButton } from '@/components/csv-template-button';
 
 export const metadata = {
-  title: 'Dashboard: Kontaktlistor'
+  title: 'Dashboard: Kontakter'
 };
 
 type PageProps = {
@@ -20,8 +20,8 @@ export default async function ContactsPage(props: PageProps) {
 
   return (
     <PageContainer
-      pageTitle='Kontaktlistor'
-      pageDescription='CRM-tabell som spårar prospects ringstatus (React Query + nuqs).'
+      pageTitle='Kontakter'
+      pageDescription='Dina prospekt och deras ringstatus.'
       infoContent={contactsInfoContent}
       pageHeaderAction={
         <div className='flex items-center gap-2'>

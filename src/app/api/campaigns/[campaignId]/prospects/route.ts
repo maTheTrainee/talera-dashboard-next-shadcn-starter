@@ -29,7 +29,11 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
     const campaign = await pb.collection('campaigns').getOne(campaignId);
     if (campaign.clerk_org_id !== orgId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      // 404 — cross-tenant id probes must not reveal that the campaign exists.
+      return NextResponse.json(
+        { error: 'Kunde inte hämta prospekten.' },
+        { status: 404 }
+      );
     }
 
     let filter = 'campaign = {:campaignId}';

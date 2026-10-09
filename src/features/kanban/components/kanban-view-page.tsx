@@ -5,7 +5,7 @@ export default function KanbanViewPage() {
   return (
     <PageContainer
       pageTitle='Realtidsvy'
-      pageDescription='Live-översikt över pågående röstsamtal — korten flyttas automatiskt av systemet.'
+      pageDescription='Pågående röstsamtal i realtid.'
     >
       <RealtimeBoard />
     </PageContainer>
