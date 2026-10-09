@@ -15,21 +15,26 @@ src/app/api/* — requireAuthContext()
    │  401 utan inloggning · 403 utan aktiv organisation
    │  ALLA PB-filter härleds från ctx (userId, orgId) — ALDRIG från klientens payload
    ▼
-PocketBase (superuser SDK — src/lib/pb.ts)
-   │  varje fråga filtreras på clerk_org_id = {:orgId}
+PocketBase som TENANT-KONTO (src/lib/pb.ts — ensurePbOrgAuth, HMAC-derivat)
+   │  PB-reglerna: clerk_org_id = @request.auth.clerk_org_id
+   │  → databasen vägrar själv främmande orgs rader (en bortglömd filter = noll rader)
    │  detaljer/mutationer verifierar posten igen (record.clerk_org_id !== orgId → 404)
    ▼
 Data — tenant-isolerad rad för rad (index på clerk_org_id)
+
+Superuser endast för provisionering + n8n (cross-tenant ringare) — aldrig datafrågor.
 ```
 
 ### Garantierna
 
-1. **Webbläsaren når aldrig PocketBase** — alla API-regler är null
-   (superuser-only). Det finns ingen CORS-väg, ingen anon-nyckel, ingen
+1. **Webbläsaren når aldrig PocketBase** — datareglerna är org-scoped eller
+   superuser-only. Det finns ingen CORS-väg, ingen anon-nyckel, ingen
    klient-SDK-konfiguration.
 2. **Tenancy-nyckeln kommer från sessionen** — `clerk_org_id` stämplas
    server-side av brandväggen vid POST (tillsammans med `created_by`) och
    härleds från `auth()` vid varje läsning. Klienten kan inte påverka den.
+   Datafrågorna körs som orgens EGET PB-konto (HMAC-derivat) — databasen
+   vägrar främmande orgs rader även vid en app-bugg.
 3. **Identifiering döljs** — kors-tenant ID-probing får 404 ("hittades inte")
    istället för 403 — en angripare kan inte skilja en främmande post från en
    icke-existerande.
@@ -49,8 +54,9 @@ Data — tenant-isolerad rad för rad (index på clerk_org_id)
 | proxy.ts matcher | ✅ | Kör på alla routes inkl. `/api/*` |
 | Dashboard-sidor | ✅ | `auth.protect()` i layouten |
 | /api/* handlers (9 st) | ✅ | Alla anropar `requireAuthContext()` |
-| PB-filter per org | ✅ | `clerk_org_id = {:orgId}` i varje fråga |
-| Detalj-/mutation-nyckel | ✅ | Re-verifiering → 404 ( existence maskad) |
+| PB tenant-konton + regler | ✅ | `clerk_org_id = @request.auth.clerk_org_id` — DB:n vägrar främmande rader |
+| Roll-grindar (Nivå 2) | ✅ | `requireArea`/`requireOrgAdmin` — fysiska 403:er per område |
+| Detalj-/mutation-nyckel | ✅ | Re-verifiering → 404 (existence maskad) |
 | POST-stämplar | ✅ | `clerk_org_id` + `created_by` server-side |
 | PB API-regler | ✅ | Alla null = superuser-only |
 | PB nätverk (prod) | ✅ | Coolify-internt Docker-nätverk (8080) — ej publikt nåbar |

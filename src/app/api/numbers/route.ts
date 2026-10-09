@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { requireAuthContext } from '@/lib/api-auth';
-import { ensurePbAuth } from '@/lib/pb';
+import { requireOrgAdmin, requireAuthContext } from '@/lib/api-auth';
+import { ensurePbOrgAuth } from '@/lib/pb';
 import type { TenantNumbersResponse } from '@/features/campaigns/api/types';
 
 // ============================================================
@@ -14,8 +14,16 @@ export async function GET() {
   if (!guard.ok) return guard.response;
   const { orgId } = guard.ctx;
 
+  // Nivå 2 — nummerkonfigurationen är en admin-yta.
+  if (!(await requireOrgAdmin(guard.ctx))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   try {
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
     const resultList = await pb.collection('numbers').getList(1, 50, {
       filter: pb.filter('clerk_org_id = {:orgId}', { orgId }),
       sort: 'label'

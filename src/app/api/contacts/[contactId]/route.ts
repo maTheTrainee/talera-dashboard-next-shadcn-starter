@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthContext } from '@/lib/api-auth';
-import { ensurePbAuth } from '@/lib/pb';
+import { requireArea, requireAuthContext } from '@/lib/api-auth';
+import { ensurePbOrgAuth } from '@/lib/pb';
 import type { ContactMutationPayload } from '@/features/contacts/api/types';
 
 // ============================================================
@@ -16,9 +16,17 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const { orgId } = guard.ctx;
   const { contactId } = await params;
 
+  // Nivå 2 — utgående eller inkommande området krävs.
+  if (!(await requireArea(guard.ctx, 'utgaende', 'inkommande'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   try {
     const body = (await request.json()) as Partial<ContactMutationPayload>;
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
 
     const record = await pb.collection('contacts').getOne(contactId);
     if (record.clerk_org_id !== orgId) {
@@ -42,8 +50,16 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   const { orgId } = guard.ctx;
   const { contactId } = await params;
 
+  // Nivå 2 — utgående eller inkommande området krävs.
+  if (!(await requireArea(guard.ctx, 'utgaende', 'inkommande'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   try {
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
 
     const record = await pb.collection('contacts').getOne(contactId);
     if (record.clerk_org_id !== orgId) {

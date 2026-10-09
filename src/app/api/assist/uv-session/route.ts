@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCapabilities } from '@/config/plans';
-import { requireAuthContext } from '@/lib/api-auth';
+import { requireArea, requireAuthContext } from '@/lib/api-auth';
 import { getTenantMetadata } from '@/lib/pb';
 import { dispatchToN8n } from '@/lib/n8n';
 import type { UVSessionResponse } from '@/types/tenant';
@@ -25,6 +25,15 @@ export async function POST() {
   if (!guard.ok) return guard.response;
 
   const { userId, orgId } = guard.ctx;
+
+  // Nivå 2 — AI-Assistent-området krävs (roll) + paketet (caps.internal).
+  if (!(await requireArea(guard.ctx, 'ai_assistent'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   const tenant = await getTenantMetadata(orgId);
 
   // Paketgrind — assistenten kräver ett paket med internt stöd

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthContext } from '@/lib/api-auth';
-import { ensurePbAuth, getTenantMetadata } from '@/lib/pb';
+import { requireArea, requireAuthContext } from '@/lib/api-auth';
+import { ensurePbOrgAuth, getTenantMetadata } from '@/lib/pb';
 import { dispatchToN8n } from '@/lib/n8n';
 import type { CampaignUpdatePayload } from '@/features/campaigns/api/types';
 
@@ -18,8 +18,16 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
   const { orgId } = guard.ctx;
   const { campaignId } = await params;
 
+  // Nivå 2 — utgående-området krävs (roll ∩ paket).
+  if (!(await requireArea(guard.ctx, 'utgaende'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   try {
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
     const record = await pb.collection('campaigns').getOne(campaignId);
 
     if (record.clerk_org_id !== orgId) {
@@ -42,9 +50,17 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const { orgId } = guard.ctx;
   const { campaignId } = await params;
 
+  // Nivå 2 — utgående-området krävs (roll ∩ paket).
+  if (!(await requireArea(guard.ctx, 'utgaende'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   try {
     const body = (await request.json()) as CampaignUpdatePayload;
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
 
     const record = await pb.collection('campaigns').getOne(campaignId);
     if (record.clerk_org_id !== orgId) {

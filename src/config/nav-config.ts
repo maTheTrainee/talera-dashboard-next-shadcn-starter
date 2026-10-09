@@ -3,10 +3,15 @@ import { NavGroup } from '@/types';
 /**
  * Talera navigation — the multi-tenant tree.
  *
- * RBAC: items 1–5 carry `access: { role: 'org:admin' }` — non-admin operator
- * accounts see ONLY "Ring AI-Assistent" (pinned as their standalone workspace).
- * The `hidden` property keeps AI Chat fully compiled in the build but removes
- * it from the sidebar and Cmd+K bar (reserved for a future admin status bot).
+ * Access = medlemmens roll ∩ organisationens paket (src/lib/access.ts):
+ * - `areas` kräver ett operativt område (utgaende / inkommande / ai_assistent)
+ * - admin ser allt orgen äger · paketen är taket för ALLA roller
+ * - paket utan utgående ser aldrig Ringkampanjer; utan AI Assistent syns
+ *   assistenten inte ens för admin (sidan visar uppgraderingsskärm)
+ * - `hidden` håller AI Chat kompilerad men osynlig (sidebar + ⌘K)
+ *
+ * Filtreringen sker SERVER-side (layouten skickar de filtrerade grupperna till
+ * sidebar + kbar) — alltid färsk från PocketBase, ingen metadata-drift.
  */
 export const navGroups: NavGroup[] = [
   {
@@ -18,7 +23,7 @@ export const navGroups: NavGroup[] = [
         icon: 'dashboard',
         isActive: false,
         items: [],
-        access: { role: 'org:admin' }
+        access: { areas: ['utgaende', 'inkommande'] }
       },
       {
         title: 'Ringkampanjer',
@@ -26,7 +31,7 @@ export const navGroups: NavGroup[] = [
         icon: 'send',
         isActive: false,
         items: [],
-        access: { role: 'org:admin' }
+        access: { areas: ['utgaende'] }
       },
       {
         title: 'Kontakter',
@@ -34,7 +39,7 @@ export const navGroups: NavGroup[] = [
         icon: 'teams',
         isActive: false,
         items: [],
-        access: { role: 'org:admin' }
+        access: { areas: ['utgaende', 'inkommande'] }
       },
       {
         title: 'Realtidsvy',
@@ -42,7 +47,7 @@ export const navGroups: NavGroup[] = [
         icon: 'kanban',
         isActive: false,
         items: [],
-        access: { role: 'org:admin' }
+        access: { areas: ['utgaende', 'inkommande'] }
       },
       {
         title: 'Samtalshistorik',
@@ -50,14 +55,15 @@ export const navGroups: NavGroup[] = [
         icon: 'chat',
         isActive: false,
         items: [],
-        access: { role: 'org:admin' }
+        access: { areas: ['utgaende', 'inkommande'] }
       },
       {
         title: 'Ring AI-Assistent',
         url: '/dashboard/assist',
         icon: 'phone',
         isActive: false,
-        items: []
+        items: [],
+        access: { areas: ['ai_assistent'] }
       },
       {
         title: 'AI Chat',

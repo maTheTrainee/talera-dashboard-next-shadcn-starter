@@ -8,9 +8,10 @@
 import PocketBase from 'pocketbase';
 
 const PB_URL =
-  process.env.NODE_ENV === 'production'
+  process.env.PB_URL_OVERRIDE ??
+  (process.env.NODE_ENV === 'production'
     ? 'http://pocketbase:8080'
-    : 'http://kallare-server:8090';
+    : 'http://kallare-server:8090');
 
 const email = process.env.PB_ADMIN_EMAIL ?? '';
 const password = process.env.PB_ADMIN_PASSWORD ?? '';
@@ -421,6 +422,67 @@ for (const collectionName of ['campaigns', 'contacts']) {
       error
     );
   }
+}
+
+// ============================================================
+// 11. Rules — org-scoped (Tier 3). The data collections get rules that
+// physically restrict every query to the authenticated org's own rows:
+// a forgotten filter in a route handler returns zero foreign rows because
+// PocketBase itself refuses them. Rules never bind the superuser (pb-setup,
+// n8n's cross-tenant dialer) — every browser-facing path is denied.
+// ============================================================
+const ORG_RULES = {
+  listRule: '@request.auth.id != "" && clerk_org_id = @request.auth.clerk_org_id',
+  viewRule: '@request.auth.id != "" && clerk_org_id = @request.auth.clerk_org_id',
+  createRule:
+    '@request.auth.id != "" && @request.body.clerk_org_id = @request.auth.clerk_org_id',
+  updateRule: '@request.auth.id != "" && clerk_org_id = @request.auth.clerk_org_id',
+  deleteRule: '@request.auth.id != "" && clerk_org_id = @request.auth.clerk_org_id'
+};
+
+for (const collectionName of Object.keys(TENANT_INDEXES)) {
+  try {
+    const col = await pb.collections.getOne(collectionName);
+    // null = superuser-only (the old baseline — safe to org-scope now);
+    // '' = public (tighten immediately). Anything else = review manually.
+    const isUnset = (r: string | null | undefined) => r == null || r === '';
+    const alreadyScoped = col.listRule?.includes('clerk_org_id') ?? false;
+    if (alreadyScoped) {
+      console.log(`• ${collectionName} regler redan org-scoped — hoppar över`);
+    } else if (isUnset(col.listRule) && isUnset(col.viewRule)) {
+      await pb.collections.update(collectionName, { ...ORG_RULES });
+      console.log(`✓ ${collectionName}: regler → org-scoped (Tier 3)`);
+    } else {
+      console.log(
+        `✖ ${collectionName}: reglerna är inte null — granska manuellt innan org-scoping`
+      );
+    }
+  } catch (error) {
+    console.error(`✖ ${collectionName}: reglerna kunde inte uppdateras`, error);
+  }
+}
+
+// users (auth collection) — tighten: no public signup, self-view only.
+// Talera (superuser) provisions accounts + sets packages; orgs can never
+// self-edit their row (their own tiers are Talera's to set).
+try {
+  const usersCol = await pb.collections.getOne('users');
+  const scoped = usersCol.listRule === 'id = @request.auth.id';
+  const publicSignup = usersCol.createRule === '' || usersCol.createRule === undefined;
+  if (scoped && !publicSignup) {
+    console.log('• users regler redan åtskärpta — hoppar över');
+  } else {
+    await pb.collections.update('users', {
+      listRule: 'id = @request.auth.id',
+      viewRule: 'id = @request.auth.id',
+      createRule: null,
+      updateRule: null,
+      deleteRule: null
+    });
+    console.log('✓ users: regler åtskärpta — ingen signup, self-view only');
+  }
+} catch (error) {
+  console.error('✖ users: reglerna kunde inte uppdateras', error);
 }
 
 console.log('');

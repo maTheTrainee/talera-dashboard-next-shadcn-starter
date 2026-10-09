@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthContext } from '@/lib/api-auth';
-import { ensurePbAuth } from '@/lib/pb';
+import { requireArea, requireAuthContext } from '@/lib/api-auth';
+import { ensurePbOrgAuth } from '@/lib/pb';
 import type { CampaignProspect, ProspectsResponse } from '@/features/campaigns/api/types';
 
 // ============================================================
@@ -17,6 +17,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   const { orgId } = guard.ctx;
   const { campaignId } = await params;
 
+  // Nivå 2 — utgående-området krävs (roll ∩ paket).
+  if (!(await requireArea(guard.ctx, 'utgaende'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   const sp = request.nextUrl.searchParams;
   const page = Number(sp.get('page') ?? 1) || 1;
   const limit = Number(sp.get('limit') ?? 25) || 25;
@@ -25,7 +33,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   const sort = sp.get('sort') ?? '-updated';
 
   try {
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
 
     const campaign = await pb.collection('campaigns').getOne(campaignId);
     if (campaign.clerk_org_id !== orgId) {

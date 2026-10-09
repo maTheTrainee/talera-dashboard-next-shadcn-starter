@@ -1,10 +1,12 @@
 import { auth } from '@clerk/nextjs/server';
 import { getCapabilities, getTierDefinition } from '@/config/plans';
+import { isAdminRole, roleGrants } from '@/lib/access';
 import { getTenantMetadata } from '@/lib/pb';
 import PageContainer from '@/components/layout/page-container';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
+  CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
@@ -31,7 +33,35 @@ export default async function OverViewLayout({
   bar_stats: React.ReactNode;
   area_stats: React.ReactNode;
 }) {
-  const { orgId } = await auth();
+  const { orgId, orgRole } = await auth();
+
+  // Nivå 2 — the dashboard needs an operational area (utgående/inkommande):
+  // AI-Assistent-only members don't get it (the nav hides the item, this
+  // covers hand-typed URLs).
+  const grants = roleGrants(orgRole);
+  const hasOperationalArea =
+    isAdminRole(orgRole) ||
+    grants.includes('utgaende') ||
+    grants.includes('inkommande');
+
+  if (!hasOperationalArea) {
+    return (
+      <PageContainer>
+        <Card>
+          <CardHeader>
+            <CardTitle>Ingen åtkomst till Översikten</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className='text-muted-foreground text-sm'>
+              Din roll ger inte tillgång till Översikten — be er admin om rätt
+              behörighet.
+            </p>
+          </CardContent>
+        </Card>
+      </PageContainer>
+    );
+  }
+
   const tenant = await getTenantMetadata(orgId ?? '');
   const caps = getCapabilities(tenant.subscription_tiers);
   const tierLabels = tenant.subscription_tiers

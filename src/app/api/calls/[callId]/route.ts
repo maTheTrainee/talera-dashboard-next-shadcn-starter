@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthContext } from '@/lib/api-auth';
-import { ensurePbAuth } from '@/lib/pb';
+import { requireArea, requireAuthContext } from '@/lib/api-auth';
+import { ensurePbOrgAuth } from '@/lib/pb';
 import type { CampaignCall } from '@/features/campaigns/api/types';
 
 // ============================================================
@@ -17,8 +17,16 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
   const { orgId } = guard.ctx;
   const { callId } = await params;
 
+  // Nivå 2 — utgående eller inkommande området krävs.
+  if (!(await requireArea(guard.ctx, 'utgaende', 'inkommande'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   try {
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
     const record = await pb.collection('calls').getOne(callId);
 
     if (record.clerk_org_id !== orgId) {

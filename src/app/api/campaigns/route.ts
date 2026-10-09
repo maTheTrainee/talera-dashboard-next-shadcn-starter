@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { canCreateCampaigns, getTierDefinition } from '@/config/plans';
-import { requireAuthContext } from '@/lib/api-auth';
-import { ensurePbAuth, getTenantMetadata } from '@/lib/pb';
+import { requireArea, requireAuthContext } from '@/lib/api-auth';
+import { ensurePbOrgAuth, getTenantMetadata } from '@/lib/pb';
 import type {
   Campaign,
   CampaignMutationPayload,
@@ -20,6 +20,14 @@ export async function GET(request: NextRequest) {
   if (!guard.ok) return guard.response;
   const { orgId } = guard.ctx;
 
+  // Nivå 2 — utgående-området krävs (roll ∩ paket).
+  if (!(await requireArea(guard.ctx, 'utgaende'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   const sp = request.nextUrl.searchParams;
   const page = Number(sp.get('page') ?? 1) || 1;
   const limit = Number(sp.get('limit') ?? 10) || 10;
@@ -28,7 +36,7 @@ export async function GET(request: NextRequest) {
   const sort = sp.get('sort') ?? '-created';
 
   try {
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
 
     let filter = 'clerk_org_id = {:orgId}';
     const filterParams: Record<string, string> = { orgId };
@@ -85,9 +93,17 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
   const { orgId, userId } = guard.ctx;
 
+  // Nivå 2 — utgående-området krävs (roll ∩ paket).
+  if (!(await requireArea(guard.ctx, 'utgaende'))) {
+    return NextResponse.json(
+      { error: 'Du saknar behörighet för den här funktionen.' },
+      { status: 403 }
+    );
+  }
+
   try {
     const body = (await request.json()) as CampaignMutationPayload;
-    const pb = await ensurePbAuth();
+    const pb = await ensurePbOrgAuth(orgId);
 
     // Tenant + package gate: inbound packages (Receptionist / AI-Assistent)
     // get no campaign creation.

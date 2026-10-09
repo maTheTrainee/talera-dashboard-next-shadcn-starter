@@ -1,11 +1,16 @@
 import { Icons } from '@/components/icons';
 
+/** The access areas a role can hold / a nav item can require. */
+export type AccessArea = 'utgaende' | 'inkommande' | 'ai_assistent';
+
 export interface PermissionCheck {
   permission?: string;
   plan?: string;
   feature?: string;
   role?: string;
   requireOrg?: boolean;
+  /** The item requires ANY of these operational areas (role grants ∩ org packages). */
+  areas?: AccessArea[];
 }
 
 export interface NavItem {
