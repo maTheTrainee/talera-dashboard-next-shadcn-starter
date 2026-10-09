@@ -60,13 +60,13 @@ const agents = await ensureCollection({
   type: 'base',
   ...rules,
   fields: [
-    { name: 'org_id', type: 'text', required: true },
+    { name: 'clerk_org_id', type: 'text', required: true },
     { name: 'name', type: 'text', required: true },
     { name: 'uv_agent_id', type: 'text', required: true },
     { name: 'description', type: 'text' },
     { name: 'active', type: 'bool' }
   ],
-  indexes: ['CREATE INDEX idx_agents_org ON agents (org_id)']
+  indexes: ['CREATE INDEX idx_agents_clerk_org ON agents (clerk_org_id)']
 });
 void agents;
 
@@ -76,7 +76,10 @@ const campaigns = await ensureCollection({
   type: 'base',
   ...rules,
   fields: [
-    { name: 'org_id', type: 'text', required: true },
+    // Clerk identifiers — the tenant key + audit trail, stamped server-side
+    // by the /api/* firewall from the verified session (never the payload).
+    { name: 'clerk_org_id', type: 'text', required: true },
+    { name: 'created_by', type: 'text' },
     { name: 'name', type: 'text', required: true },
     { name: 'description', type: 'text' },
     {
@@ -94,7 +97,7 @@ const campaigns = await ensureCollection({
     { name: 'created', type: 'autodate', onCreate: true },
     { name: 'updated', type: 'autodate', onCreate: true, onUpdate: true }
   ],
-  indexes: ['CREATE INDEX idx_campaigns_org ON campaigns (org_id, created)']
+  indexes: ['CREATE INDEX idx_campaigns_clerk_org ON campaigns (clerk_org_id, created)']
 });
 
 // 2. contacts — prospects + follow-up scheduling + contact counters
@@ -103,7 +106,11 @@ const contacts = await ensureCollection({
   type: 'base',
   ...rules,
   fields: [
-    { name: 'org_id', type: 'text', required: true },
+    // clerk_org_id = tenant key · created_by = the Clerk user who made the
+    // input. org_number below = the LEAD's Swedish organisationsnummer —
+    // business data, never a tenant key. These NEVER mix.
+    { name: 'clerk_org_id', type: 'text', required: true },
+    { name: 'created_by', type: 'text' },
     {
       name: 'campaign',
       type: 'relation',
@@ -140,7 +147,7 @@ const contacts = await ensureCollection({
     { name: 'created', type: 'autodate', onCreate: true },
     { name: 'updated', type: 'autodate', onCreate: true, onUpdate: true }
   ],
-  indexes: ['CREATE INDEX idx_contacts_org ON contacts (org_id, updated)']
+  indexes: ['CREATE INDEX idx_contacts_clerk_org ON contacts (clerk_org_id, updated)']
 });
 
 // 3. calls — call history with engine call ids + transcripts
@@ -149,7 +156,7 @@ await ensureCollection({
   type: 'base',
   ...rules,
   fields: [
-    { name: 'org_id', type: 'text', required: true },
+    { name: 'clerk_org_id', type: 'text', required: true },
     {
       name: 'campaign',
       type: 'relation',
@@ -173,7 +180,7 @@ await ensureCollection({
     { name: 'created', type: 'autodate', onCreate: true },
     { name: 'updated', type: 'autodate', onCreate: true, onUpdate: true }
   ],
-  indexes: ['CREATE INDEX idx_calls_org ON calls (org_id, created)']
+  indexes: ['CREATE INDEX idx_calls_clerk_org ON calls (clerk_org_id, created)']
 });
 
 // 4. usage_daily — daily minute quotas + overage liability
@@ -182,14 +189,14 @@ await ensureCollection({
   type: 'base',
   ...rules,
   fields: [
-    { name: 'org_id', type: 'text', required: true },
+    { name: 'clerk_org_id', type: 'text', required: true },
     { name: 'date', type: 'text', required: true },
     { name: 'minutes_used', type: 'number', min: 0 },
     { name: 'overage_minutes', type: 'number', min: 0 },
     { name: 'created', type: 'autodate', onCreate: true },
     { name: 'updated', type: 'autodate', onCreate: true, onUpdate: true }
   ],
-  indexes: ['CREATE UNIQUE INDEX idx_usage_org_date ON usage_daily (org_id, date)']
+  indexes: ['CREATE UNIQUE INDEX idx_usage_clerk_org_date ON usage_daily (clerk_org_id, date)']
 });
 
 // 5. Extend users (auth collection) — append missing fields only.
@@ -211,7 +218,8 @@ const additions = [
       'AI_ASSISTENT'
     ]
   },
-  { name: 'pb_container_id', type: 'text' }
+  { name: 'pb_container_id', type: 'text' },
+  { name: 'company_org_number', type: 'text' }
 ].filter((f) => !existing.has(f.name));
 
 if (additions.length > 0) {
@@ -304,14 +312,118 @@ await ensureCollection({
   type: 'base',
   ...rules,
   fields: [
-    { name: 'org_id', type: 'text', required: true },
+    { name: 'clerk_org_id', type: 'text', required: true },
     { name: 'number', type: 'text', required: true },
     { name: 'label', type: 'text' }
   ],
-  indexes: ['CREATE INDEX idx_numbers_org ON numbers (org_id)']
+  indexes: ['CREATE INDEX idx_numbers_clerk_org ON numbers (clerk_org_id)']
 });
+
+// ============================================================
+// 9. Migrate org_id → clerk_org_id — the two-identifier convention:
+//      clerk_*       = Clerk identifiers (tenant key + audit, server-stamped)
+//      *_org_number  = Swedish organisationsnummer (business data — leads and
+//                      tenant companies) — these NEVER mix.
+//    Backfills existing rows from org_id, then drops the old field, flips
+//    clerk_org_id to required and recreates the tenant indexes. Idempotent:
+//    already-migrated collections are skipped.
+// ============================================================
+const TENANT_INDEXES: Record<string, string[]> = {
+  agents: ['CREATE INDEX idx_agents_clerk_org ON agents (clerk_org_id)'],
+  campaigns: [
+    'CREATE INDEX idx_campaigns_clerk_org ON campaigns (clerk_org_id, created)'
+  ],
+  contacts: [
+    'CREATE INDEX idx_contacts_clerk_org ON contacts (clerk_org_id, updated)'
+  ],
+  calls: ['CREATE INDEX idx_calls_clerk_org ON calls (clerk_org_id, created)'],
+  usage_daily: [
+    'CREATE UNIQUE INDEX idx_usage_clerk_org_date ON usage_daily (clerk_org_id, date)'
+  ],
+  numbers: ['CREATE INDEX idx_numbers_clerk_org ON numbers (clerk_org_id)']
+};
+
+for (const [collectionName, indexes] of Object.entries(TENANT_INDEXES)) {
+  try {
+    const col = await pb.collections.getOne(collectionName);
+    const hasField = (field: string) =>
+      (col.fields as { name: string }[]).some((f) => f.name === field);
+    if (!hasField('org_id')) {
+      console.log(`• ${collectionName}.clerk_org_id redan migrerad — hoppar över`);
+      continue;
+    }
+
+    // 1. Append clerk_org_id as optional — backfill before the required flip.
+    if (!hasField('clerk_org_id')) {
+      await pb.collections.update(collectionName, {
+        fields: [
+          ...(col.fields as { name: string; type: string }[]),
+          { name: 'clerk_org_id', type: 'text' }
+        ]
+      });
+    }
+
+    // 2. Backfill every existing row from org_id.
+    const rows = await pb.collection(collectionName).getFullList({ batch: 200 });
+    for (const row of rows) {
+      if (!row.clerk_org_id && row.org_id) {
+        await pb.collection(collectionName).update(row.id, {
+          clerk_org_id: row.org_id
+        });
+      }
+    }
+
+    // 3. Drop org_id, flip clerk_org_id to required, recreate the indexes.
+    const fresh = await pb.collections.getOne(collectionName);
+    const migratedFields = fresh.fields
+      .filter((f: { name: string }) => f.name !== 'org_id')
+      .map((f: { name: string; required?: boolean }) =>
+        f.name === 'clerk_org_id' ? { ...f, required: true } : f
+      );
+    await pb.collections.update(collectionName, {
+      fields: migratedFields,
+      indexes
+    });
+    console.log(
+      `✓ ${collectionName}: org_id → clerk_org_id (${rows.length} rader backfillade)`
+    );
+  } catch (error) {
+    console.error(`✖ ${collectionName}: migreringen misslyckades`, error);
+  }
+}
+
+// 10. created_by — the Clerk user id of whoever made the input (audit trail,
+// separate from the clerk_org_id ownership key). Stamped server-side by the
+// /api/* firewall on POST — never trusted from the browser. Calls and usage
+// rows are created by n8n instead: they inherit clerk_org_id from the
+// campaign/number row they belong to.
+for (const collectionName of ['campaigns', 'contacts']) {
+  try {
+    const col = await pb.collections.getOne(collectionName);
+    if (
+      !(col.fields as { name: string }[]).some((f) => f.name === 'created_by')
+    ) {
+      await pb.collections.update(collectionName, {
+        fields: [
+          ...(col.fields as { name: string; type: string }[]),
+          { name: 'created_by', type: 'text' }
+        ]
+      });
+      console.log(`✓ ${collectionName} utökad: created_by`);
+    } else {
+      console.log(`• ${collectionName}.created_by finns redan`);
+    }
+  } catch (error) {
+    console.error(
+      `✖ ${collectionName}: created_by kunde inte läggas till`,
+      error
+    );
+  }
+}
 
 console.log('');
 console.log('✓ KLAR — datatabeller + behörigheter (superuser-only) provisionerade.');
-console.log('  Nästa steg: skapa din users-rad i admin-UI med clerk_org_id + subscription_tier.');
+console.log(
+  '  Nästa steg: skapa din users-rad i admin-UI med clerk_org_id + subscription_tier.'
+);
 console.log(`  Admin-UI: ${PB_URL}/_/`);

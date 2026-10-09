@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   try {
     const pb = await ensurePbAuth();
 
-    let filter = 'org_id = {:orgId}';
+    let filter = 'clerk_org_id = {:orgId}';
     const filterParams: Record<string, string> = { orgId };
     if (status) {
       filter += ' && status = {:status}';
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const guard = await requireAuthContext();
   if (!guard.ok) return guard.response;
-  const { orgId } = guard.ctx;
+  const { orgId, userId } = guard.ctx;
 
   try {
     const body = (await request.json()) as CampaignMutationPayload;
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     if (!quoteBased) {
       const existing = await pb.collection('campaigns').getList(1, 1, {
-        filter: pb.filter('org_id = {:orgId}', { orgId })
+        filter: pb.filter('clerk_org_id = {:orgId}', { orgId })
       });
       const max = Math.max(...outboundTiers.map((t) => t.maxCampaigns ?? 0), 1);
       if (existing.totalItems >= max) {
@@ -113,9 +113,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Tenant + audit stamp — from the verified session, never the payload.
     const record = await pb.collection('campaigns').create({
       ...body,
-      org_id: orgId,
+      clerk_org_id: orgId,
+      created_by: userId,
       status: 'köad'
     });
 

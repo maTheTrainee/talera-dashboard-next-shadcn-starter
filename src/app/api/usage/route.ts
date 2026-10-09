@@ -36,7 +36,7 @@ export async function GET() {
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
     const result = await pb.collection('usage_daily').getList(1, 200, {
-      filter: pb.filter('org_id = {:orgId} && date >= {:from}', {
+      filter: pb.filter('clerk_org_id = {:orgId} && date >= {:from}', {
         orgId,
         from: monthStart.toISOString().slice(0, 10)
       }),

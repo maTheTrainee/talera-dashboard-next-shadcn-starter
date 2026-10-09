@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   try {
     const pb = await ensurePbAuth();
 
-    let filter = 'org_id = {:orgId}';
+    let filter = 'clerk_org_id = {:orgId}';
     const filterParams: Record<string, string> = { orgId };
     if (status) {
       filter += ' && status = {:status}';
@@ -52,15 +52,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const guard = await requireAuthContext();
   if (!guard.ok) return guard.response;
-  const { orgId } = guard.ctx;
+  const { orgId, userId } = guard.ctx;
 
   try {
     const body = (await request.json()) as ContactMutationPayload;
     const pb = await ensurePbAuth();
 
+    // Tenant + audit stamp — from the verified session, never the payload.
     const record = await pb.collection('contacts').create({
       ...body,
-      org_id: orgId,
+      clerk_org_id: orgId,
+      created_by: userId,
       status: body.status ?? 'ny'
     });
 

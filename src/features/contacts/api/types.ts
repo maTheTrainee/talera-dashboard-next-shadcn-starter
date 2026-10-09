@@ -1,6 +1,9 @@
 export interface Contact {
   id: string;
-  org_id: string;
+  /** Clerk-organisationens id — tenant-nyckeln, server-stampad. */
+  clerk_org_id: string;
+  /** Clerk-användarens id — vem som skapade kontakten (audit). */
+  created_by: string | null;
   campaign_id: string | null;
   /** Engine call id (uv) written back by n8n after each completed call. */
   call_id: string | null;
@@ -10,7 +13,10 @@ export interface Contact {
   phone: string;
   /** Företagsnamn — helps operators recall the company behind the contact. */
   company: string | null;
-  /** Organisationsnummer — the Swedish company identification number. */
+  /**
+   * Organisationsnummer — the LEAD's Swedish company number. Business data
+   * about the prospect — never a tenant key (that is `clerk_org_id`).
+   */
   org_number: string | null;
   status: string;
   call_outcome: string | null;

@@ -5,8 +5,8 @@ import { dispatchToN8n } from '@/lib/n8n';
 import type { CampaignUpdatePayload } from '@/features/campaigns/api/types';
 
 // ============================================================
-// Campaign detail — Clerk firewall. Tenant isolation: the record's org_id
-// must match the verified orgId before any read or mutation.
+// Campaign detail — Clerk firewall. Tenant isolation: the record's
+// clerk_org_id must match the verified orgId before any read or mutation.
 // PATCH → 'live' hands the batch execution to n8n (start.batch.campaign).
 // ============================================================
 
@@ -22,7 +22,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     const pb = await ensurePbAuth();
     const record = await pb.collection('campaigns').getOne(campaignId);
 
-    if (record.org_id !== orgId) {
+    if (record.clerk_org_id !== orgId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     const pb = await ensurePbAuth();
 
     const record = await pb.collection('campaigns').getOne(campaignId);
-    if (record.org_id !== orgId) {
+    if (record.clerk_org_id !== orgId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

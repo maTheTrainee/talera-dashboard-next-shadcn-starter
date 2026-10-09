@@ -5,6 +5,23 @@ reusable against the prod container). The Next.js server singleton
 (`src/lib/pb.ts`) and the n8n `n8n-nodes-pocketbase-admin` node both operate
 on these shapes.
 
+## The two identifier types (dessa blandas ALDRIG)
+
+| Naming pattern | Meaning | Examples | Key? |
+|---|---|---|---|
+| **`clerk_*`** | Clerk identifiers — authentication/tenancy | `clerk_org_id` (tenant key), `created_by` (the user who made the input) | ✅ the only keys |
+| **`*_org_number` / `org_number`** | Swedish organisationsnummer — business data | `contacts.org_number` (the **lead's** company), `users.company_org_number` (the **tenant's own** company) | ❌ never — display/invoicing data |
+
+- `clerk_org_id` is **the only tenancy key**: immutable, unique, arrives
+  pre-verified in every request. Org.nummer is free text — a typo would merge
+  or leak tenants, so it is never a join key.
+- Every tenant-owned row records BOTH **who** owns it (`clerk_org_id`) and
+  **which user** made the input (`created_by`) — both stamped **server-side**
+  by the `/api/*` firewall from the verified Clerk session, never trusted
+  from the browser payload.
+- n8n-created rows (calls, usage_daily) inherit `clerk_org_id` from the
+  campaign/number row they belong to.
+
 ## Permission model (deliberate — the security contract at the DB layer)
 
 All five API rules (`listRule` / `viewRule` / `createRule` / `updateRule` /
@@ -26,14 +43,16 @@ extension only).
 ## `users` (built-in auth collection — extended)
 | Field | Type | Notes |
 |---|---|---|
-| `clerk_org_id` | text | Links the dashboard user to the Clerk organization |
-| `subscription_tier` | select | `DELTID` / `HELTID` / `TEAM` / `ENTERPRISE` |
+| `clerk_org_id` | text | **Tenant key** — links the dashboard user to the Clerk organization |
+| `subscription_tier` | select (max 7) | `DELTID` / `HELTID` / `TEAM` / `ENTERPRISE` / `RECEPTIONIST` / `RECEPTIONIST_BOOKER` / `AI_ASSISTENT` |
+| `company_org_number` | text | The **tenant's own** Swedish organisationsnummer — offert/faktura/display, never a key |
 | `pb_container_id` | text | Optional — per-tenant container override for n8n routing |
 
 ## `campaigns`
 | Field | Type | Notes |
 |---|---|---|
-| `org_id` | text (req) | Tenant isolation key — every query filters on this |
+| `clerk_org_id` | text (req) | **Tenant key** — every query filters on this; stamped server-side on POST |
+| `created_by` | text | The Clerk user who made the input (audit, server-stamped) |
 | `name` | text (req) | |
 | `description` | text | |
 | `status` | select (req) | `köad` / `live` / `pausad` / `avslutat` |
@@ -42,45 +61,64 @@ extension only).
 | `uv_agent_id` | text | Voice agent identifier |
 | `outbound_number` | text | E.164 (07X ➔ +467X cleaned on input) |
 | `max_attempts` | number ≥0 | Anti-spam cap — engine stops dialing at this many attempts without a booked follow-up. 0 = unlimited (default 3) |
-| `created` / `updated` | autodate | PB 0.23+ explicit autodate fields |
+| `created` / `updated` | autodate | Index on `(clerk_org_id, created)` |
 
 ## `contacts` (Kontaktlistor / prospects)
 | Field | Type | Notes |
 |---|---|---|
-| `org_id` | text (req) | Tenant isolation key |
+| `clerk_org_id` | text (req) | **Tenant key** — stamped server-side on POST |
+| `created_by` | text | The Clerk user who made the input (audit) |
 | `campaign` | relation → campaigns | Optional — locks the prospect into a campaign |
 | `call_id` | text | Engine call id (uv) written back by n8n after each call |
 | `first_name` / `last_name` | text (req) | |
 | `email` / `phone` | text | Phone stored E.164 (`phone` req) |
+| `company` | text | Företagsnamn — the lead's company |
+| `org_number` | text | **The LEAD's** Swedish organisationsnummer — business data, never a tenant key |
 | `status` | select (req) | `ny` / `i_ko` / `ringer` / `i_samtal` / `avslutat` / `ej_svar` / **`uppföljning`** / **`max_försök`** |
 | `call_outcome` | text | Written by n8n post-call |
 | `follow_up_at` | date | "Uppföljning 2026-05-03 15:30" — when the agent will call back |
 | `contact_attempts` | number ≥0 | Every dial attempt (n8n-maintained, read-only from the app) |
 | `last_contacted_at` | date | Any attempt |
 | `last_conversation_at` | date | Actual conversation only |
-| `created` / `updated` | autodate | |
+| `created` / `updated` | autodate | Index on `(clerk_org_id, updated)` |
 
 ## `calls` (Samtalshistorik / transcripts)
 | Field | Type | Notes |
 |---|---|---|
-| `org_id` | text (req) | Tenant isolation key |
+| `clerk_org_id` | text (req) | **Tenant key** — inherited from the campaign row when n8n creates the call |
 | `campaign` | relation → campaigns | |
 | `prospect` | relation → contacts | |
 | `call_id` | text (req) | **Engine call id — n8n writes it from the call lifecycle webhook**; join key for transcripts + `?callId=` deep links |
+| `call_type` | select | `utgående` / `inkommande` / `intern` — n8n stamps per product line |
 | `status` | text | Live cycle state |
 | `outcome` / `summary` | text | n8n-generated post-call summary |
 | `duration_seconds` | number ≥0 | Feeds daily minute accounting |
 | `transcript` | json | `[{ text, speaker: 'user' \| 'agent', isFinal }]` |
-| `created` / `updated` | autodate | |
+| `created` / `updated` | autodate | Index on `(clerk_org_id, created)` |
 
 ## `usage_daily`
 | Field | Type | Notes |
 |---|---|---|
-| `org_id` | text (req) | Tenant isolation key |
+| `clerk_org_id` | text (req) | **Tenant key** |
 | `date` | text (req) | `YYYY-MM-DD` |
 | `minutes_used` | number ≥0 | Aggregate call minutes for the day |
 | `overage_minutes` | number ≥0 | Minutes beyond the tier daily limit (n8n-tracked) |
-| `created` / `updated` | autodate | Unique index on `(org_id, date)` |
+| `created` / `updated` | autodate | Unique index on `(clerk_org_id, date)` |
+
+## `agents` (uv voice agents per tenant)
+| Field | Type | Notes |
+|---|---|---|
+| `clerk_org_id` | text (req) | **Tenant key** |
+| `name` | text (req) | The dashboard resolves agents by name — never raw ids |
+| `uv_agent_id` | text (req) | Engine agent identifier |
+| `description` / `active` | text / bool | |
+
+## `numbers` (tenant's outbound numbers)
+| Field | Type | Notes |
+|---|---|---|
+| `clerk_org_id` | text (req) | **Tenant key** — the campaign form lists these per tenant |
+| `number` | text (req) | The outbound number |
+| `label` | text | Display label |
 
 ## n8n tenant metadata envelope
 Every dispatch from Next.js to `POST /webhook/dashboard-api` carries:
@@ -90,12 +128,16 @@ Every dispatch from Next.js to `POST /webhook/dashboard-api` carries:
   "action": "start.web.session | start.batch.campaign",
   "tenant": {
     "orgId": "[clerk_org_id]",
-    "subscription_tier": "DELTID | HELTID | TEAM | ENTERPRISE",
+    "subscription_tiers": ["TEAM", "AI_ASSISTENT"],
     "pocketbase_container": "pocketbase-4g2oakxp5wxj1ovct1bjprmw"
   },
   "payload": { }
 }
 ```
+
+The envelope `tenant.orgId` value is the Clerk org id — when n8n writes rows
+back to PocketBase it must target the **`clerk_org_id`** field (never
+`org_number` — that is the lead's Swedish company number).
 
 ## n8n automation flows (built on this schema)
 
@@ -115,7 +157,8 @@ Per dial decision:
         another cycle by engaging)
 
 Post-call (every call lifecycle webhook):
-  create calls row (call_id, transcript, summary, duration_seconds)
+  create calls row (clerk_org_id ← inherited from the campaign, call_type,
+                    call_id, transcript, summary, duration_seconds)
   update contact:
     call_id, contact_attempts + 1, last_contacted_at
     conversation?  → last_conversation_at

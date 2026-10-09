@@ -17,7 +17,7 @@ export async function GET() {
   try {
     const pb = await ensurePbAuth();
     const resultList = await pb.collection('numbers').getList(1, 50, {
-      filter: pb.filter('org_id = {:orgId}', { orgId }),
+      filter: pb.filter('clerk_org_id = {:orgId}', { orgId }),
       sort: 'label'
     });
     const response: TenantNumbersResponse = {

@@ -12,7 +12,10 @@ export type ProspectStatus =
 
 export interface Campaign {
   id: string;
-  org_id: string;
+  /** Clerk-organisationens id — tenant-nyckeln, server-stampad. */
+  clerk_org_id: string;
+  /** Clerk-användarens id — vem som skapade kampanjen (audit). */
+  created_by: string | null;
   name: string;
   description: string;
   status: CampaignStatus;
@@ -33,7 +36,8 @@ export interface Campaign {
 
 export interface CampaignProspect {
   id: string;
-  org_id: string;
+  /** Clerk-organisationens id — tenant-nyckeln. */
+  clerk_org_id: string;
   campaign_id: string;
   /** Engine call id (uv) written back by n8n after each completed call. */
   call_id: string | null;
@@ -59,7 +63,8 @@ export interface CampaignProspect {
 
 export interface CampaignCall {
   id: string;
-  org_id: string;
+  /** Clerk-organisationens id — tenant-nyckeln (n8n ärver från kampanjen). */
+  clerk_org_id: string;
   campaign_id: string;
   prospect_id: string | null;
   /** Engine call id (uv) — written by n8n from the call lifecycle webhook. */
@@ -103,7 +108,8 @@ export type CampaignMutationPayload = {
 
 export interface TenantNumber {
   id: string;
-  org_id: string;
+  /** Clerk-organisationens id — tenant-nyckeln. */
+  clerk_org_id: string;
   number: string;
   label: string | null;
 }

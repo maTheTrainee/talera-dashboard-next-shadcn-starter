@@ -4,8 +4,8 @@ import { ensurePbAuth } from '@/lib/pb';
 import type { ContactMutationPayload } from '@/features/contacts/api/types';
 
 // ============================================================
-// Contact detail — Clerk firewall. Tenant isolation: the record's org_id
-// must match the verified orgId before any mutation.
+// Contact detail — Clerk firewall. Tenant isolation: the record's
+// clerk_org_id must match the verified orgId before any mutation.
 // ============================================================
 
 type RouteContext = { params: Promise<{ contactId: string }> };
@@ -21,7 +21,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     const pb = await ensurePbAuth();
 
     const record = await pb.collection('contacts').getOne(contactId);
-    if (record.org_id !== orgId) {
+    if (record.clerk_org_id !== orgId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -42,7 +42,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
     const pb = await ensurePbAuth();
 
     const record = await pb.collection('contacts').getOne(contactId);
-    if (record.org_id !== orgId) {
+    if (record.clerk_org_id !== orgId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

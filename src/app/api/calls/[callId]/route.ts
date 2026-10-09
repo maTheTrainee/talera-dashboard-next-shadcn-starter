@@ -6,7 +6,7 @@ import type { CampaignCall } from '@/features/campaigns/api/types';
 // ============================================================
 // Call detail — Clerk firewall. Feeds the Chat Transcript popup modal and the
 // /dashboard/chat?callId=[ID] deep links. Tenant isolation: the record's
-// org_id must match the verified orgId.
+// clerk_org_id must match the verified orgId.
 // ============================================================
 
 type RouteContext = { params: Promise<{ callId: string }> };
@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     const pb = await ensurePbAuth();
     const record = await pb.collection('calls').getOne(callId);
 
-    if (record.org_id !== orgId) {
+    if (record.clerk_org_id !== orgId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

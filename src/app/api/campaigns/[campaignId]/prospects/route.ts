@@ -5,7 +5,7 @@ import type { CampaignProspect, ProspectsResponse } from '@/features/campaigns/a
 
 // ============================================================
 // Campaign prospects — the nested deep-dive relational lead grid.
-// The parent campaign's org_id must match the verified orgId before the
+// The parent campaign's clerk_org_id must match the verified orgId before the
 // relational contacts query is allowed (tenant isolation).
 // ============================================================
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const pb = await ensurePbAuth();
 
     const campaign = await pb.collection('campaigns').getOne(campaignId);
-    if (campaign.org_id !== orgId) {
+    if (campaign.clerk_org_id !== orgId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
