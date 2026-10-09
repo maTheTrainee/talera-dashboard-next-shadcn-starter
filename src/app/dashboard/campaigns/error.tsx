@@ -23,8 +23,9 @@ export default function CampaignsError({
           <Icons.warning className='h-5 w-5' /> Kampanjer kunde inte laddas
         </CardTitle>
         <CardDescription>
-          PocketBase svarar inte. Kontrollera anslutningen (kallare-server:8090) och försök
-          igen.
+          Databasen svarar inte just nu
+          {process.env.NODE_ENV !== 'production' && ' (kallare-server:8090)'}
+          {' '}— försök igen om en stund.
         </CardDescription>
       </CardHeader>
       <CardContent>
