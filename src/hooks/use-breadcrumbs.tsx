@@ -8,34 +8,58 @@ type BreadcrumbItem = {
   link: string;
 };
 
-// This allows to add custom title as well
-const routeMapping: Record<string, BreadcrumbItem[]> = {
-  '/dashboard': [{ title: 'Dashboard', link: '/dashboard' }],
-  '/dashboard/employee': [
-    { title: 'Dashboard', link: '/dashboard' },
-    { title: 'Employee', link: '/dashboard/employee' }
-  ]
-  // Add more custom mappings as needed
+/**
+ * Svenska sökvägsrubriker — kända segment översätts, okända dynamiska id:n
+ * mappas via kontext (kampanj-id → Kampanj-Cockpit) och okända Clerk-profil-
+ * undervägar kapitaliseras som fallback.
+ */
+const SEGMENT_TITLES: Record<string, string> = {
+  dashboard: 'Hem',
+  overview: 'Översikt',
+  campaigns: 'Ringkampanjer',
+  contacts: 'Kontakter',
+  kanban: 'Realtidsvy',
+  chat: 'Samtalshistorik',
+  assist: 'Ring AI-Assistent',
+  notifications: 'Notiser',
+  profile: 'Profil',
+  workspaces: 'Arbetsytor',
+  team: 'Team',
+  'ai-chat': 'AI Chat',
+  // Clerk-profilens undervägar (engelska slugs — översatta där kända)
+  account: 'Konto',
+  security: 'Säkerhet',
+  sessions: 'Sessioner',
+  emails: 'E-post',
+  'connected-accounts': 'Kopplade konton'
 };
 
 export function useBreadcrumbs() {
   const pathname = usePathname();
 
   const breadcrumbs = useMemo(() => {
-    // Check if we have a custom mapping for this exact path
-    if (routeMapping[pathname]) {
-      return routeMapping[pathname];
-    }
-
-    // If no exact match, fall back to generating breadcrumbs from the path
     const segments = pathname.split('/').filter(Boolean);
-    return segments.map((segment, index) => {
+    const items: BreadcrumbItem[] = [];
+    let previousArea = '';
+
+    segments.forEach((segment, index) => {
       const path = `/${segments.slice(0, index + 1).join('/')}`;
-      return {
-        title: segment.charAt(0).toUpperCase() + segment.slice(1),
-        link: path
-      };
+      const isKnown = segment in SEGMENT_TITLES;
+
+      // Dynamiskt id under Ringkampanjer = kampanjcockpit-sidan.
+      if (!isKnown && previousArea === 'campaigns') {
+        items.push({ title: 'Kampanj-Cockpit', link: path });
+        previousArea = '';
+        return;
+      }
+      // Okända id:n/undervägar (t.ex. Clerk-interna) hoppas över.
+      if (!isKnown) return;
+
+      previousArea = segment;
+      items.push({ title: SEGMENT_TITLES[segment], link: path });
     });
+
+    return items;
   }, [pathname]);
 
   return breadcrumbs;

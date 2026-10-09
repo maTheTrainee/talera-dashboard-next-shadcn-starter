@@ -46,7 +46,7 @@ const mockNotifications: Notification[] = [
     actions: [
       {
         id: 'view-product',
-        label: 'Visa kontaktlista',
+        label: 'Öppna Kontakter',
         type: 'redirect',
         style: 'primary',
         route: '/dashboard/contacts'
