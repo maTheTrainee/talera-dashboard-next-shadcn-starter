@@ -11,7 +11,7 @@ const PB_URL =
   process.env.PB_URL_OVERRIDE ??
   (process.env.NODE_ENV === 'production'
     ? 'http://pocketbase:8080'
-    : 'http://kallare-server:8090');
+    : 'http://kallare-server.tailbf8a69.ts.net:8090');
 
 const email = process.env.PB_ADMIN_EMAIL ?? '';
 const password = process.env.PB_ADMIN_PASSWORD ?? '';

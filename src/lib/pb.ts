@@ -26,7 +26,7 @@ const PB_URL =
   process.env.PB_URL_OVERRIDE ??
   (process.env.NODE_ENV === 'production'
     ? 'http://pocketbase:8080' // Coolify-internal container port (Docker network)
-    : 'http://kallare-server:8090'); // Tailscale public port (dev host)
+    : 'http://kallare-server.tailbf8a69.ts.net:8090'); // Tailscale MagicDNS (dev host) — full name, shortnames can be flaky
 
 let pbSingleton: PocketBase | null = null;
 
