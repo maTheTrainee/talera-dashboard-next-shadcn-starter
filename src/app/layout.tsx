@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs';
+import { svSE } from '@clerk/localizations';
 import Providers from '@/components/layout/providers';
 import { Toaster } from '@/components/ui/sonner';
 import { fontVariables } from '@/components/themes/font.config';
@@ -44,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const themeToApply = isValidTheme ? activeThemeValue! : DEFAULT_THEME;
 
   return (
-    <html lang='en' suppressHydrationWarning data-theme={themeToApply}>
+    <html lang='sv' suppressHydrationWarning data-theme={themeToApply}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -65,7 +66,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           fontVariables
         )}
       >
-        <ClerkProvider>
+        {/* svSE — ALLT Clerk-UI på svenska: inloggning, org-växlare,
+            Team-hantering (inbjudan/roller), profil, logga ut. Cast: Clerk v7:s
+            DeepPartial-typ är för snål mot @clerk/localizations resurs (känd
+            typ-skew — runtime-nycklarna är kompatibla). */}
+        <ClerkProvider
+          localization={
+            svSE as unknown as Parameters<typeof ClerkProvider>[0]['localization']
+          }
+        >
           <NextTopLoader color='var(--primary)' showSpinner={false} />
           <NuqsAdapter>
             <ThemeProvider

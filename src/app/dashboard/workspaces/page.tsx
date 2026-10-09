@@ -40,7 +40,7 @@ function OrgBootstrap() {
 export default function WorkspacesPage() {
   return (
     <PageContainer
-      pageTitle='Workspaces'
+      pageTitle='Arbetsytor'
       pageDescription='Hantera dina arbetsytor och växla mellan dem'
       infoContent={workspacesInfoContent}
     >

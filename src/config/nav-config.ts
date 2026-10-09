@@ -79,14 +79,14 @@ export const navGroups: NavGroup[] = [
     label: '',
     items: [
       {
-        title: 'Workspaces',
+        title: 'Arbetsytor',
         url: '/dashboard/workspaces',
         icon: 'workspace',
         isActive: false,
         items: []
       },
       {
-        title: 'Teams',
+        title: 'Team',
         url: '/dashboard/workspaces/team',
         icon: 'teams',
         isActive: false,
@@ -94,13 +94,13 @@ export const navGroups: NavGroup[] = [
         access: { requireOrg: true }
       },
       {
-        title: 'Account',
+        title: 'Konto',
         url: '#',
         icon: 'account',
         isActive: true,
         items: [
           {
-            title: 'Profile',
+            title: 'Profil',
             url: '/dashboard/profile',
             icon: 'profile',
             shortcut: ['m', 'm']
@@ -112,7 +112,7 @@ export const navGroups: NavGroup[] = [
             shortcut: ['n', 'n']
           },
           {
-            title: 'Login',
+            title: 'Logga in',
             shortcut: ['l', 'l'],
             url: '/',
             icon: 'login'

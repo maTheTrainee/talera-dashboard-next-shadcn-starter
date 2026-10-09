@@ -1,103 +1,60 @@
 import type { InfobarContent } from '@/components/ui/infobar';
 
 export const workspacesInfoContent: InfobarContent = {
-  title: 'Workspaces Management',
+  title: 'Arbetsytor',
   sections: [
     {
-      title: 'Overview',
+      title: 'Översikt',
       description:
-        'The Workspaces page allows you to manage your workspaces and switch between them. This feature is powered by Clerk Organizations, which enables multi-tenant workspace management. You can view all available workspaces, create new ones, and switch your active workspace.',
-      links: [
-        {
-          title: 'Clerk Organizations Documentation',
-          url: 'https://clerk.com/docs/organizations/overview'
-        }
-      ]
-    },
-    {
-      title: 'Creating Workspaces',
-      description:
-        'To create a new workspace, click the "Create Organization" button. You will be prompted to enter a workspace name and configure initial settings. Once created, you can switch to the new workspace and start managing it.',
-      links: [
-        {
-          title: 'Multi-tenant Authentication Guide',
-          url: 'https://clerk.com/blog/how-to-build-multitenant-authentication-with-clerk'
-        }
-      ]
-    },
-    {
-      title: 'Switching Workspaces',
-      description:
-        'You can switch between workspaces by clicking on a workspace in the list. The selected workspace becomes your active organization context, and all organization-specific features will use this workspace.',
+        'Arbetsytorna hanterar dina organisationer — en per kund. Du kan skapa nya, växla mellan dem och bjuda in kollegor. Alla funktioner i appen följer den aktiva arbetsytans paket.',
       links: []
     },
     {
-      title: 'Workspace Features',
+      title: 'Skapa ny arbetsyta',
       description:
-        'Each workspace operates independently with its own team members, roles, permissions, and billing. This allows you to manage multiple projects or teams within a single account while keeping their data and settings separate.',
+        'Klicka på "Skapa organisation" för en ny kund eller avdelning. Den blir aktiv direkt och datan provisioningas automatiskt vid första besöket.',
       links: []
     },
     {
-      title: 'Server-Side Permission Checks',
+      title: 'Växla arbetsyta',
       description:
-        "This application follows Clerk's recommended patterns for multi-tenant authentication. Server-side permission checks ensure that users can only access resources for their active organization.",
-      links: [
-        {
-          title: 'Clerk Organizations Documentation',
-          url: 'https://clerk.com/docs/organizations/overview'
-        }
-      ]
+        'Klicka på en arbetsyta i listan för att växla — all data är helt separerad mellan arbetsytorna.',
+      links: []
+    },
+    {
+      title: 'Team & roller',
+      description:
+        'Varje arbetsyta har sitt eget team med svenska roller (Utgående samtal, Inkommande samtal, AI Assistent). Admin ger ut rollerna i Team-hanteringen.',
+      links: []
     }
   ]
 };
 
 export const teamInfoContent: InfobarContent = {
-  title: 'Team Management',
+  title: 'Team-hantering',
   sections: [
     {
-      title: 'Overview',
+      title: 'Medlemmar & roller',
       description:
-        "The Team Management page allows you to manage your workspace team, including members, roles, security settings, and more. This page provides comprehensive organization management through Clerk's OrganizationProfile component.",
-      links: [
-        {
-          title: 'Clerk Organizations Documentation',
-          url: 'https://clerk.com/docs/organizations/overview'
-        }
-      ]
-    },
-    {
-      title: 'Managing Team Members',
-      description:
-        'You can add, remove, and manage team members from this page. Invite new members by email, assign roles, and control their access levels. Each member can have different permissions based on their role.',
+        'Bjud in kollegor via e-post och ge dem en svensk roll: Utgående samtal (ringkampanjer & prospekt), Inkommande samtal (statistik & historik), AI Assistent — eller kombinationer. Rollen avgör exakt vad medlemmen ser och kan göra.',
       links: []
     },
     {
-      title: 'Roles and Permissions',
+      title: 'Paketen sätter taket',
       description:
-        'Configure default roles and permissions in the Clerk Dashboard under Organizations settings. Roles define what actions team members can perform within the workspace. Common roles include admin, member, and custom roles you define.',
-      links: [
-        {
-          title: 'Clerk Organizations Documentation',
-          url: 'https://clerk.com/docs/organizations/overview'
-        }
-      ]
-    },
-    {
-      title: 'Security Settings',
-      description:
-        "Manage security settings for your workspace, including authentication requirements, session management, and access controls. These settings help protect your organization's data and resources.",
+        'Ingen roll kan ge mer än vad organisationen köpt — har ni inte AI Assistenten syns den inte för någon, inte ens admin. Paketen sätts av Talera.',
       links: []
     },
     {
-      title: 'Organization Settings',
+      title: 'Admin',
       description:
-        'Configure general organization settings such as name, logo, and other workspace preferences. These settings apply to the entire workspace and affect all team members.',
+        'Admin ser allt som ingår i organisationens paket: Översikt, Ringkampanjer, Kontakter, Realtidsvy, Samtalshistorik samt team- och nummerhantering.',
       links: []
     },
     {
-      title: 'Navigation RBAC System',
+      title: 'Återkalla åtkomst',
       description:
-        'The application includes a fully client-side navigation filtering system using the `useNav` hook. It supports `requireOrg`, `permission`, and `role` checks for instant access control. Navigation items are configured in `src/config/nav-config.ts` with `access` properties.',
+        'Ta bort en medlem så förlorar personen omedelbar åtkomst — inga uppgifter lämnas kvar i databasen.',
       links: []
     }
   ]

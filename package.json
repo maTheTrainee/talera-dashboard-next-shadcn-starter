@@ -21,6 +21,7 @@
   "dependencies": {
     "@ai-sdk/react": "^4.0.47",
     "@base-ui/react": "^1.6.0",
+    "@clerk/localizations": "^4.21.2",
     "@clerk/nextjs": "^7.8.1",
     "@sentry/nextjs": "^10.45.0",
     "@shadcn/helpers": "^0.1.0",

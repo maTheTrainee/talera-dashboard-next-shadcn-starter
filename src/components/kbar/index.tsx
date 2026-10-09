@@ -30,7 +30,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
               name: navItem.title,
               shortcut: navItem.shortcut,
               keywords: navItem.title.toLowerCase(),
-              section: 'Navigation',
+              section: 'Navigering',
               subtitle: `Öppna ${navItem.title}`,
               perform: () => navigateTo(navItem.url)
             }
