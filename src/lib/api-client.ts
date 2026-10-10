@@ -1,11 +1,4 @@
 const BASE_URL = '/api';
-// SSR-säker fetch: relativa URL:er kraschar i Node (Next server-renderar
-// klientkomponenter), så serverkontexten behöver en absolut bas.
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? '';
-
-function buildUrl(endpoint: string): string {
-  return APP_URL ? `${APP_URL}${BASE_URL}${endpoint}` : `${BASE_URL}${endpoint}`;
-}
 
 /** Error with the API's user-facing Swedish message (from the JSON body). */
 export class ApiError extends Error {
@@ -19,7 +12,19 @@ export class ApiError extends Error {
 }
 
 export async function apiClient<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(buildUrl(endpoint), {
+  // SSR-skip: apiClient körs ENDAST i webbläsaren. Next server-renderar
+  // klientkomponenter, men queryFn:s under SSR har ingen Clerk-session
+  // (401 "Unauthorized" → hela sidan kastades till klientrendering med
+  // felgräns). Ett aldrig-lösande promise håller Suspense-gränsen pågående
+  // under SSR (skelettet streamas), och klienten gör själva hämtningen med
+  // sessionens cookies — BFF-mönstret (cookies går inte att vidarebefordra
+  // server-side). Relativa URL:er räcker då: alltid same-origin, cookies
+  // skickas alltid, oavsett vilken host som surfas från.
+  if (typeof window === 'undefined') {
+    return new Promise<T>(() => {});
+  }
+
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options
   });

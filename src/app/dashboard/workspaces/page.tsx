@@ -1,42 +1,8 @@
 'use client';
 
 import PageContainer from '@/components/layout/page-container';
-import { OrganizationList, useOrganizationList, useUser } from '@clerk/nextjs';
+import { OrganizationList } from '@clerk/nextjs';
 import { workspacesInfoContent } from '@/config/infoconfig';
-import * as React from 'react';
-
-/**
- * OrgBootstrap — the forced-org funnel (Nivå 1): a signed-in user with NO org
- * membership gets one created and activated automatically (zero clicks).
- * The PB tenant materializes on the first authenticated request after this.
- */
-function OrgBootstrap() {
-  const { isLoaded, userMemberships, createOrganization, setActive } = useOrganizationList();
-  const { user, isLoaded: userLoaded } = useUser();
-  const [creating, setCreating] = React.useState(false);
-  const attemptedRef = React.useRef(false);
-
-  React.useEffect(() => {
-    if (!isLoaded || !userLoaded || creating || attemptedRef.current) return;
-    // Vänta tills medlemskapslistan faktiskt laddat — en oladdad (undefined)
-    // lista tolkas annars som "inga organisationer" och skapar en ny org vid
-    // varje besök (orsakade dubbletter av "Jockes organisation").
-    if (!userMemberships || userMemberships.isLoading) return;
-    const membershipCount = userMemberships.data?.length ?? 0;
-    if (membershipCount > 0) return; // already has orgs — nothing to bootstrap
-
-    attemptedRef.current = true;
-    setCreating(true);
-    const name = user?.firstName ? `${user.firstName}s organisation` : 'Min organisation';
-    createOrganization({ name })
-      .then((org) => setActive({ organization: org.id ?? org }))
-      .catch(() => {})
-      .finally(() => setCreating(false));
-  }, [isLoaded, userLoaded, user, userMemberships, creating, createOrganization, setActive]);
-
-  if (!creating) return null;
-  return <p className='text-muted-foreground text-sm'>Skapar din organisation…</p>;
-}
 
 export default function WorkspacesPage() {
   return (
@@ -45,7 +11,12 @@ export default function WorkspacesPage() {
       pageDescription='Hantera dina arbetsytor och växla mellan dem'
       infoContent={workspacesInfoContent}
     >
-      <OrgBootstrap />
+      {/* Org-skapande är manuellt och medvetet: kundföretaget = EN Clerk-org,
+          namngiven efter företaget. Databas-rummet (tenant-kontot + all kunddata
+          stämplad clerk_org_id) provisioneras automatiskt av den lazy
+          tenant-provisioningen vid kundens första autentiserade anrop.
+          Auto-skapande här skapade dubbletter ("Jockes organisation" ×25) och
+          splitskåde kunddatan mellan orgarna — borttaget. */}
       <OrganizationList
         appearance={{
           elements: {
