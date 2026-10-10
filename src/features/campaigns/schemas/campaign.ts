@@ -12,9 +12,11 @@ export function normalizePhoneNumber(raw: string): string {
   return digits;
 }
 
-/** Strict scheduling window: campaigns must span 4–10 hours. */
+/** Strict scheduling window: same day, 08:00–19:00, max 11 hours. The 4-hour
+ * minimum is a RECOMMENDATION (warning dialog in the wizard) — short windows
+ * are allowed but n8n cannot guarantee every number gets dialed. */
 export const MIN_SCHEDULING_WINDOW_HOURS = 4;
-export const MAX_SCHEDULING_WINDOW_HOURS = 10;
+export const MAX_SCHEDULING_WINDOW_HOURS = 11;
 
 /**
  * The dialing window lock: earliest start 08:00, latest end 19:00.
@@ -31,6 +33,7 @@ function timeOfDayMinutes(value: string): number | null {
   if (Number.isNaN(h) || Number.isNaN(m)) return null;
   return h * 60 + m;
 }
+export { timeOfDayMinutes };
 
 /** Base object schema — exported so step schemas can use .pick(). */
 export const campaignBaseSchema = z.object({
@@ -79,18 +82,6 @@ export const campaignSchema = campaignBaseSchema
       return start.toDateString() === end.toDateString();
     },
     { message: 'Kampanjen måste vara inom samma dag', path: ['scheduled_end'] }
-  )
-  .refine(
-    (data) => {
-      const start = new Date(data.scheduled_start).getTime();
-      const end = new Date(data.scheduled_end).getTime();
-      if (Number.isNaN(start) || Number.isNaN(end)) return false;
-      return end - start >= MIN_SCHEDULING_WINDOW_HOURS * 60 * 60 * 1000;
-    },
-    {
-      message: `Schemaläggningsfönstret måste vara minst ${MIN_SCHEDULING_WINDOW_HOURS} timmar`,
-      path: ['scheduled_end']
-    }
   )
   .refine(
     (data) => {

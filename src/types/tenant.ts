@@ -25,6 +25,8 @@ export interface TenantMetadata {
   /** The tenant's packages (multi-select in the PB users collection). */
   subscription_tiers: SubscriptionTier[];
   pocketbase_container: string;
+  /** Per-tenant tillval (option B): evening dialing until 19:00. */
+  evenings: boolean;
 }
 
 export interface N8nEnvelope<TPayload> {

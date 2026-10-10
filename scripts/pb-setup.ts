@@ -221,7 +221,8 @@ const additions = [
     ]
   },
   { name: 'pb_container_id', type: 'text' },
-  { name: 'company_org_number', type: 'text' }
+  { name: 'company_org_number', type: 'text' },
+  { name: 'evenings', type: 'bool' }
 ].filter((f) => !existing.has(f.name));
 
 if (additions.length > 0) {

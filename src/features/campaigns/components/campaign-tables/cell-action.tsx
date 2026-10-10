@@ -16,6 +16,7 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { CampaignFormSheet } from '../campaign-form-sheet';
+import { ResumeCampaignDialog } from '../resume-campaign-dialog';
 
 interface CellActionProps {
   data: Campaign;
@@ -23,6 +24,7 @@ interface CellActionProps {
 
 export function CellAction({ data }: CellActionProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
   const router = useRouter();
 
   const statusMutation = useMutation({
@@ -36,6 +38,10 @@ export function CellAction({ data }: CellActionProps) {
   return (
     <>
       <CampaignFormSheet campaign={data} open={editOpen} onOpenChange={setEditOpen} />
+      <ResumeCampaignDialog
+        campaign={resumeOpen ? data : null}
+        onClose={() => setResumeOpen(false)}
+      />
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
           <span className='sr-only'>Öppna meny</span>
@@ -65,6 +71,11 @@ export function CellAction({ data }: CellActionProps) {
                 }
               >
                 Pausa
+              </DropdownMenuItem>
+            )}
+            {data.status === 'avslutad' && (
+              <DropdownMenuItem onClick={() => setResumeOpen(true)}>
+                <Icons.clock className='mr-2 h-4 w-4' /> Återuppta
               </DropdownMenuItem>
             )}
             <DropdownMenuItem

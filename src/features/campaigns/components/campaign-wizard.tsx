@@ -24,16 +24,30 @@ import { LoadingButton } from '@/components/ui/loading-button';
 import { Separator } from '@/components/ui/separator';
 import { CsvTemplateButton } from '@/components/csv-template-button';
 import { createCampaignMutation } from '../api/mutations';
+import { createCampaign } from '../api/service';
 import { tenantNumbersQueryOptions } from '../api/queries';
+import type { CampaignMutationPayload } from '../api/types';
+import { parseProspectCsv, type CsvRow } from '../utils/parse-csv';
 import {
   campaignBaseSchema,
   campaignSchema,
   DIALING_WINDOW_START,
   DIALING_WINDOW_END,
-  MIN_SCHEDULING_WINDOW_HOURS,
   MAX_SCHEDULING_WINDOW_HOURS,
+  MIN_SCHEDULING_WINDOW_HOURS,
   normalizePhoneNumber
 } from '../schemas/campaign';
+import { apiClient } from '@/lib/api-client';
+import { getQueryClient } from '@/lib/query-client';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { SchedulingControls, toIsoDateTime, type SchedulingValue } from './scheduling-controls';
 
 // --- Step schemas (picked from the base object; the strict 4-hour scheduling
 // window is validated immediately at step 2, and re-validated against the full
@@ -42,31 +56,19 @@ import {
 const stepSchemas = [
   // Step 1: Grundinfo
   campaignBaseSchema.pick({ name: true, description: true }),
-  // Step 2: Schemaläggning + agent + nummer
-  campaignBaseSchema
-    .pick({
-      scheduled_start: true,
-      scheduled_end: true,
-      outbound_number: true,
-      max_attempts: true
-    })
-    .refine(
-      (data) => {
-        const start = new Date(data.scheduled_start).getTime();
-        const end = new Date(data.scheduled_end).getTime();
-        if (Number.isNaN(start) || Number.isNaN(end)) return false;
-        return end - start >= MIN_SCHEDULING_WINDOW_HOURS * 60 * 60 * 1000;
-      },
-      {
-        message: `Schemaläggningsfönstret måste vara minst ${MIN_SCHEDULING_WINDOW_HOURS} timmar`,
-        path: ['scheduled_end']
-      }
-    ),
+  // Step 2: Schemaläggning + agent + nummer — 4h är en REKOMMENDATION
+  // (varningsdialog), inte ett hårt block. 08–19 + samma dag + ≤11h är hårda.
+  campaignBaseSchema.pick({
+    scheduled_start: true,
+    scheduled_end: true,
+    outbound_number: true,
+    max_attempts: true
+  }),
   // Step 3: CSV-uppladdning (obligatoriskt — dropzone + mall)
   z.object({
     csv_file: z.array(z.unknown()).min(1, 'Ladda upp en kontaktlista (CSV)')
   }),
-  // Step 4: Granska
+  // Step 4: Granska & koppla
   z.object({})
 ];
 
@@ -162,14 +164,77 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
     handleNextStepOrSubmit
   } = useFormStepper(stepSchemas, { fullSchema: campaignSchema });
 
+  // Schemaläggning — datum + 24h-tider (Heldag 08:00–17:00 är standard,
+  // datumet är idag). ISO byggs deterministiskt → valideringen feltolkar aldrig.
+  const [scheduling, setScheduling] = React.useState<SchedulingValue>(() => ({
+    date: new Date(new Date().setHours(0, 0, 0, 0)),
+    start: '08:00',
+    end: '17:00'
+  }));
+
+  // Kvälls-tillvalet (per-tenant, slås på av Talera i PB-admin).
+  const { data: tenantData } = useQuery({
+    queryKey: ['tenant'] as const,
+    queryFn: () => apiClient<{ evenings: boolean }>('/tenant'),
+    staleTime: 60_000
+  });
+  const evenings = tenantData?.evenings ?? false;
+
+  // CSV-granskning: parsade rader + telefonbaserade konflikter + radval.
+  const [csvRows, setCsvRows] = React.useState<CsvRow[]>([]);
+  const [conflicts, setConflicts] = React.useState<Record<string, string>>({});
+  const [choices, setChoices] = React.useState<
+    Record<string, 'link' | 'create' | 'skip'>
+  >({});
+  const [warnOpen, setWarnOpen] = React.useState(false);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+
   const createMutation = useMutation({
-    ...createCampaignMutation,
-    onSuccess: (campaign) => {
-      toast.success('Kampanjen skapad — öppnar cockpiten');
-      onDone();
-      router.push(`/dashboard/campaigns/${campaign.id}`);
-    },
+    mutationFn: (data: CampaignMutationPayload) => createCampaign(data),
     onError: () => toast.error('Kunde inte skapa kampanjen. Försök igen.')
+  });
+
+  interface ImportResult {
+    created: number;
+    linked: number;
+    skipped: number;
+    invalid: number;
+  }
+
+  const importMutation = useMutation({
+    mutationFn: ({
+      campaignId,
+      rows,
+      choices: rowChoices
+    }: {
+      campaignId: string;
+      rows: CsvRow[];
+      choices: Record<string, 'link' | 'create' | 'skip'>;
+    }) =>
+      apiClient<ImportResult>(`/campaigns/${campaignId}/prospects/import`, {
+        method: 'POST',
+        body: JSON.stringify({ rows, choices: rowChoices })
+      }),
+    onSuccess: () => {
+      getQueryClient().invalidateQueries({ queryKey: ['campaigns'] as const });
+    }
+  });
+
+  const contactsOnlyMutation = useMutation({
+    mutationFn: (rows: CsvRow[]) =>
+      apiClient<ImportResult>('/contacts/import', {
+        method: 'POST',
+        body: JSON.stringify({ rows })
+      }),
+    onSuccess: (result) => {
+      getQueryClient().invalidateQueries({ queryKey: ['contacts'] as const });
+      toast.success(
+        `${result.created} kontakter sparade${result.skipped > 0 ? `, ${result.skipped} fanns redan` : ''}`
+      );
+      setConfirmOpen(false);
+      onDone();
+    },
+    onError: () => toast.error('Importen kunde inte göras. Försök igen.')
   });
 
   const form = useAppForm({
@@ -188,7 +253,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
       onDynamicAsyncDebounceMs: 500
     },
     onSubmit: async ({ value }) => {
-      await createMutation.mutateAsync({
+      const campaign = await createMutation.mutateAsync({
         name: value.name,
         description: value.description,
         scheduled_start: value.scheduled_start,
@@ -199,18 +264,94 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
             : normalizePhoneNumber(value.outbound_number),
         max_attempts: value.max_attempts ?? 3
       });
+
+      // Importera prospekten enligt Granska & koppla-valen.
+      const result = await importMutation.mutateAsync({
+        campaignId: campaign.id,
+        rows: csvRows,
+        choices
+      });
+
+      toast.success(
+        `Kampanjen skapad — ${result.created} nya, ${result.linked} kopplade${result.skipped > 0 ? `, ${result.skipped} hoppade över` : ''}`
+      );
+      onDone();
+      router.push(`/dashboard/campaigns/${campaign.id}`);
     }
   });
+
+  // Schemaläggningens tillstånd → formulärets ISO-värden.
+  React.useEffect(() => {
+    form.setFieldValue(
+      'scheduled_start',
+      toIsoDateTime(scheduling.date, scheduling.start)
+    );
+    form.setFieldValue(
+      'scheduled_end',
+      toIsoDateTime(scheduling.date, scheduling.end)
+    );
+  }, [scheduling, form]);
 
   const isDefault = useStore(form.store, (state) => state.isDefaultValue);
   const formValues = useStore(form.store, (state) => state.values) as WizardFormValues;
 
+  // CSV-filen → parsade rader → telefonmatchning → förvalda radval.
+  const csvFile = formValues.csv_file;
+  React.useEffect(() => {
+    const file = csvFile?.[0] as File | undefined;
+    if (!file) {
+      setCsvRows([]);
+      setConflicts({});
+      setChoices({});
+      return;
+    }
+    let cancelled = false;
+    void file.text().then(async (text) => {
+      const rows = parseProspectCsv(text);
+      if (cancelled) return;
+      setCsvRows(rows);
+
+      const phones = [
+        ...new Set(rows.map((r) => normalizePhoneNumber(r.phone)).filter(Boolean))
+      ];
+      if (phones.length === 0) return;
+      try {
+        const result = await apiClient<{ matches: Record<string, string> }>(
+          '/contacts/match-check',
+          { method: 'POST', body: JSON.stringify({ phones }) }
+        );
+        if (cancelled) return;
+        setConflicts(result.matches ?? {});
+        const defaults: Record<string, 'link' | 'create' | 'skip'> = {};
+        for (const row of rows) {
+          const phone = normalizePhoneNumber(row.phone);
+          if (!phone) continue;
+          defaults[phone] = (result.matches ?? {})[phone] ? 'link' : 'create';
+        }
+        setChoices(defaults);
+      } catch {
+        if (!cancelled) setConflicts({});
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [csvFile]);
+
+  // Schemafönstrets längd i timmar (för varningen < 4h).
+  const windowHours =
+    (Number(scheduling.end.slice(0, 2)) * 60 + Number(scheduling.end.slice(3, 5)) -
+      (Number(scheduling.start.slice(0, 2)) * 60 +
+        Number(scheduling.start.slice(3, 5)))) /
+    60;
+
   // Tenant numbers — the dropdown lists the org's numbers; with none in the
-  // database the select locks to "Använd förvalt nummer" (n8n fallback).
+  // database the field locks to "Använd förvalt nummer" (greyed, n8n fallback).
   const { data: numbersData } = useQuery({
     ...tenantNumbersQueryOptions(),
     placeholderData: (prev) => prev
   });
+  const hasNumbers = (numbersData?.items ?? []).length > 0;
   const numberOptions = [
     { value: 'default', label: 'Använd förvalt nummer' },
     ...(numbersData?.items ?? []).map((n) => ({
@@ -219,7 +360,24 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
     }))
   ];
 
+  // Med egna nummer: första egna numret förvalt (förvalt finns kvar som val).
+  React.useEffect(() => {
+    const first = numbersData?.items?.[0]?.number;
+    if (first && formValues.outbound_number === 'default') {
+      form.setFieldValue('outbound_number', first);
+    }
+  }, [numbersData, formValues.outbound_number, form]);
+
   const handleNext = async () => {
+    // < 4 timmar → varningsdialog (rekommendationen), inte ett hårt block.
+    if (
+      currentStep === 2 &&
+      scheduling.date &&
+      windowHours < MIN_SCHEDULING_WINDOW_HOURS
+    ) {
+      setWarnOpen(true);
+      return;
+    }
     await handleNextStepOrSubmit(form);
   };
 
@@ -289,42 +447,38 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
               <FieldGroup className='space-y-4'>
                 <h3 className='text-lg font-semibold'>Schemaläggning</h3>
                 <FieldDescription>
-                  Ringfönster: {DIALING_WINDOW_START}–{DIALING_WINDOW_END} · Min{' '}
-                  {MIN_SCHEDULING_WINDOW_HOURS} h · Max {MAX_SCHEDULING_WINDOW_HOURS} h —
-                  kampanjer som når {DIALING_WINDOW_END} avslutas tidigt; automationen sparar
-                  återstående prospekt.
+                  Ringfönster: {DIALING_WINDOW_START}–{DIALING_WINDOW_END} ·
+                  Rekommendation min {MIN_SCHEDULING_WINDOW_HOURS} h — kampanjen
+                  avslutas vid fönstrets slut och kvarvarande prospekter kan
+                  återupptas.
                 </FieldDescription>
 
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                  <form.AppField
-                    name='scheduled_start'
-                    children={(field) => (
-                      <field.TextField
-                        label='Start'
-                        required
-                        type='datetime-local'
-                        min={`${new Date().toISOString().slice(0, 10)}T${DIALING_WINDOW_START}`}
-                      />
-                    )}
-                  />
-                  <form.AppField
-                    name='scheduled_end'
-                    children={(field) => (
-                      <field.TextField label='Slut' required type='datetime-local' />
-                    )}
-                  />
-                </div>
+                <SchedulingControls
+                  value={scheduling}
+                  onChange={setScheduling}
+                  evenings={evenings}
+                />
 
                 <form.AppField
                   name='outbound_number'
-                  children={(field) => (
-                    <field.SelectField
-                      label='Utgående nummer'
-                      options={numberOptions}
-                      placeholder='Använd förvalt nummer'
-                      description='Väljer du inget nummer används n8n:s förvalda fallback-nummer.'
-                    />
-                  )}
+                  children={(field) =>
+                    hasNumbers ? (
+                      <field.SelectField
+                        label='Utgående nummer — ringer med detta'
+                        options={numberOptions}
+                        placeholder='Välj nummer'
+                        description='Numret mottagaren ser när AI-agenten ringer.'
+                      />
+                    ) : (
+                      <div className='bg-muted/40 rounded-lg border border-dashed p-3'>
+                        <p className='text-sm font-medium'>Använd förvalt nummer</p>
+                        <p className='text-muted-foreground text-xs'>
+                          Talera ringer med ett förvalt nummer — kontakta oss för
+                          att få ett eget.
+                        </p>
+                      </div>
+                    )
+                  }
                 />
 
                 <form.AppField
@@ -370,9 +524,94 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
 
             {currentStep === 4 && (
               <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>Granska & skapa</h3>
-                <FieldDescription>Kontrollera uppgifterna innan kampanjen köas.</FieldDescription>
+                <h3 className='text-lg font-semibold'>Granska & koppla</h3>
+                <FieldDescription>
+                  Kontrollera prospekterna — konflikter hanteras per rad innan
+                  kampanjen köas.
+                </FieldDescription>
                 <ReviewSummary values={formValues} />
+
+                <div className='max-h-72 overflow-auto rounded-lg border'>
+                  <table className='w-full text-sm'>
+                    <thead className='bg-muted/60 sticky top-0 z-10'>
+                      <tr className='text-muted-foreground text-left text-[11px] uppercase'>
+                        <th className='py-2 pr-3 pl-3 font-medium'>Kontakt</th>
+                        <th className='py-2 pr-3 font-medium'>Telefon</th>
+                        <th className='py-2 pr-3 font-medium'>Hantering</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvRows.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className='text-muted-foreground py-6 text-center'>
+                            Ingen fil — gå tillbaka och ladda upp en CSV.
+                          </td>
+                        </tr>
+                      ) : (
+                        csvRows.map((row, index) => {
+                          const phone = normalizePhoneNumber(row.phone);
+                          const existingId = conflicts[phone];
+                          const choice = choices[phone];
+                          const name = `${row.first_name} ${row.last_name}`.trim();
+                          return (
+                            <tr
+                              key={`${phone}-${index}`}
+                              className='hover:bg-muted/40 border-b last:border-0'
+                            >
+                              <td className='py-2 pr-3 pl-3'>
+                                <span className='font-medium'>{name || '—'}</span>
+                                {row.company && (
+                                  <span className='text-muted-foreground block text-xs'>
+                                    {row.company}
+                                  </span>
+                                )}
+                              </td>
+                              <td className='text-muted-foreground py-2 pr-3 tabular-nums'>
+                                {phone || '✕ ogiltigt nummer'}
+                              </td>
+                              <td className='py-2 pr-3'>
+                                {!phone ? (
+                                  <Badge variant='outline' className='bg-destructive/10 text-destructive'>
+                                    Exkluderad
+                                  </Badge>
+                                ) : existingId ? (
+                                  <Select
+                                    value={choice ?? 'link'}
+                                    onValueChange={(v) =>
+                                      setChoices((prev) => ({
+                                        ...prev,
+                                        [phone]: v as 'link' | 'create' | 'skip'
+                                      }))
+                                    }
+                                  >
+                                    <SelectTrigger className='h-7 w-[190px] text-xs'>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value='link'>
+                                        Koppla befintlig kontakt
+                                      </SelectItem>
+                                      <SelectItem value='create'>Skapa ny ändå</SelectItem>
+                                      <SelectItem value='skip'>Hoppa över</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <Badge variant='secondary'>Ny — skapas & kopplas</Badge>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <p className='text-muted-foreground text-xs'>
+                  {csvRows.filter((r) => normalizePhoneNumber(r.phone) && !conflicts[normalizePhoneNumber(r.phone)]).length} nya ·{' '}
+                  {csvRows.filter((r) => normalizePhoneNumber(r.phone) && conflicts[normalizePhoneNumber(r.phone)]).length} befintliga ·{' '}
+                  {csvRows.filter((r) => !normalizePhoneNumber(r.phone)).length} ogiltiga
+                </p>
               </div>
             )}
           </motion.div>
@@ -400,9 +639,20 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                 Återställ
               </Button>
             )}
+            {currentStep === 4 && (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                disabled={csvRows.length === 0 || importMutation.isPending}
+                onClick={() => setConfirmOpen(true)}
+              >
+                Spara endast kontakter
+              </Button>
+            )}
             {step.isCompleted ? (
               <LoadingButton loading={createMutation.isPending} type='submit'>
-                Skapa kampanj
+                Skapa kampanj & köa
               </LoadingButton>
             ) : (
               <Button size='sm' variant='ghost' type='button' onClick={() => void handleNext()}>
@@ -411,6 +661,58 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
             )}
           </div>
         </div>
+
+        {/* Varning — < 4 timmar är en rekommendation, inte ett block */}
+        <Dialog open={warnOpen} onOpenChange={setWarnOpen}>
+          <DialogContent className='max-w-md'>
+            <DialogHeader>
+              <DialogTitle>Kort schemafönster</DialogTitle>
+              <DialogDescription>
+                Fönstret är {windowHours.toFixed(1).replace('.0', '')} timmar — det
+                är inte garanterat att kampanjen hinner ringa alla nummer. Vår
+                rekommendation är alltid minst {MIN_SCHEDULING_WINDOW_HOURS} timmar
+                per kampanj.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='flex justify-end gap-2'>
+              <Button variant='outline' onClick={() => setWarnOpen(false)}>
+                Justera tiden
+              </Button>
+              <Button
+                onClick={() => {
+                  setWarnOpen(false);
+                  void handleNextStepOrSubmit(form);
+                }}
+              >
+                Fortsätt ändå
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bekräftelse — Spara endast kontakter skapar ingen kampanj */}
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent className='max-w-md'>
+            <DialogHeader>
+              <DialogTitle>Spara endast kontakter?</DialogTitle>
+              <DialogDescription>
+                Kampanjen skapas inte — kontakterna sparas bara i Kontakter.
+                Är du säker?
+              </DialogDescription>
+            </DialogHeader>
+            <div className='flex justify-end gap-2'>
+              <Button variant='outline' onClick={() => setConfirmOpen(false)}>
+                Avbryt
+              </Button>
+              <LoadingButton
+                loading={contactsOnlyMutation.isPending}
+                onClick={() => contactsOnlyMutation.mutate(csvRows)}
+              >
+                Ja, spara kontakterna
+              </LoadingButton>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </form>
   );

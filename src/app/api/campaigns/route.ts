@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { canCreateCampaigns, getTierDefinition } from '@/config/plans';
 import { requireArea, requireAuthContext } from '@/lib/api-auth';
 import { ensurePbOrgAuth, getTenantMetadata } from '@/lib/pb';
+import { timeOfDayMinutes } from '@/features/campaigns/schemas/campaign';
 import type {
   Campaign,
   CampaignMutationPayload,
@@ -112,6 +113,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Erbjudandet omfattar inte utgående kampanjer.' },
         { status: 403 }
+      );
+    }
+
+    // Nivå 2 — kvällsringning är ett per-tenant-tillval (slås på i PB-admin):
+    // utan `evenings` avslås fönster som slutar efter 17:00.
+    const endTod = timeOfDayMinutes(body.scheduled_end ?? '');
+    if (endTod != null && endTod > 17 * 60 && !tenant.evenings) {
+      return NextResponse.json(
+        { error: 'Kvällsringning ingår inte i ert avtal — kontakta Talera.' },
+        { status: 402 }
       );
     }
 

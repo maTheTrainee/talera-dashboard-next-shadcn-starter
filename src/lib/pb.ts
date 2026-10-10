@@ -185,13 +185,15 @@ export async function getTenantMetadata(orgId: string): Promise<TenantMetadata> 
       pocketbase_container:
         (row?.pb_container_id as string | undefined) ??
         process.env.POCKETBASE_CONTAINER_ID ??
-        'pocketbase'
+        'pocketbase',
+      evenings: Boolean(row?.evenings)
     };
   } catch {
     meta = {
       orgId,
       subscription_tiers: ['DELTID'],
-      pocketbase_container: process.env.POCKETBASE_CONTAINER_ID ?? 'pocketbase'
+      pocketbase_container: process.env.POCKETBASE_CONTAINER_ID ?? 'pocketbase',
+      evenings: false
     };
   }
 
