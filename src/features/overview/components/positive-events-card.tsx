@@ -2,13 +2,7 @@
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProspectDialog, type ProspectPreview } from './prospect-dialog';
 
@@ -82,12 +76,16 @@ const PROSPECT_MOCKS: Record<string, ProspectPreview> = {
     status: 'avslutat',
     attempts: 2,
     max: 3,
+    callId: 'uv-call-8f3a2b1c',
     lastSummary:
       'Anna var intresserad och bokade ett möte till torsdag 14:00. Bra samtal, 4 minuter.',
     lastTranscript: [
       { speaker: 'agent', text: 'Hej Anna! Det är din AI-assistent från Talera. Har du en minut?' },
       { speaker: 'user', text: 'Ja, säg till!' },
-      { speaker: 'agent', text: 'Perfekt — jag bokar in ett möte till torsdag 14:00. Fungerar det?' },
+      {
+        speaker: 'agent',
+        text: 'Perfekt — jag bokar in ett möte till torsdag 14:00. Fungerar det?'
+      },
       { speaker: 'user', text: 'Ja det fungerar fint.' }
     ]
   },
@@ -98,6 +96,7 @@ const PROSPECT_MOCKS: Record<string, ProspectPreview> = {
     status: 'kvalificerad',
     attempts: 1,
     max: 3,
+    callId: 'uv-call-2e7f9a4d',
     lastSummary:
       'Erik kvalificerades som prospekt — stor budget, nära inköpsbeslut. Skickar offert.',
     lastTranscript: [
@@ -113,6 +112,7 @@ const PROSPECT_MOCKS: Record<string, ProspectPreview> = {
     followUpAt: '2026-05-03 15:30',
     attempts: 2,
     max: 3,
+    callId: 'uv-call-3a8c2d7e',
     lastSummary:
       'Maria bad oss ringa tillbaka efter klockan 15 — uppföljning bokad till 3 maj 15:30.',
     lastTranscript: [

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 // MOCK — visual preview. Wiring pass: the dialog receives the real contact +
 // latest call (from /api/contacts + /api/calls/[callId]) instead of mock data.
@@ -24,6 +25,8 @@ export interface ProspectPreview {
   followUpAt?: string;
   attempts: number;
   max: number;
+  /** Samtalets id — driver djuplänken till Samtalshistorik (?callId=). */
+  callId?: string;
   lastSummary?: string;
   lastTranscript?: { text: string; speaker: 'user' | 'agent' }[];
 }
@@ -41,8 +44,8 @@ const STATUS_LABELS: Record<string, string> = {
   i_samtal: 'I samtal',
   avslutat: 'Avslutat',
   ej_svar: 'Ej svar',
-  'uppföljning': 'Uppföljning',
-  'max_försök': 'Max försök'
+  uppföljning: 'Uppföljning',
+  max_försök: 'Max försök'
 };
 
 /**
@@ -51,6 +54,8 @@ const STATUS_LABELS: Record<string, string> = {
  * from the cockpit / real contact lists at wiring time).
  */
 export function ProspectDialog({ open, onClose, prospect }: ProspectDialogProps) {
+  const router = useRouter();
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className='max-w-lg'>
@@ -71,9 +76,7 @@ export function ProspectDialog({ open, onClose, prospect }: ProspectDialogProps)
               </Badge>
               <Badge variant='outline'>
                 Kontaktförsök:{' '}
-                {prospect.max > 0
-                  ? `${prospect.attempts}/${prospect.max}`
-                  : prospect.attempts}
+                {prospect.max > 0 ? `${prospect.attempts}/${prospect.max}` : prospect.attempts}
               </Badge>
               {prospect.followUpAt && (
                 <Badge variant='outline'>Uppföljning: {prospect.followUpAt}</Badge>
@@ -81,9 +84,7 @@ export function ProspectDialog({ open, onClose, prospect }: ProspectDialogProps)
             </div>
 
             <div>
-              <p className='text-muted-foreground text-xs font-medium uppercase'>
-                Samtalshistorik
-              </p>
+              <p className='text-muted-foreground text-xs font-medium uppercase'>Samtalshistorik</p>
               {prospect.lastSummary ? (
                 <div className='mt-2 space-y-3'>
                   <p className='bg-muted rounded-lg p-3 text-sm'>{prospect.lastSummary}</p>
@@ -109,13 +110,22 @@ export function ProspectDialog({ open, onClose, prospect }: ProspectDialogProps)
                   ))}
                 </div>
               ) : (
-                <p className='text-muted-foreground mt-2 text-sm'>
-                  Inga samtal registrerade än.
-                </p>
+                <p className='text-muted-foreground mt-2 text-sm'>Inga samtal registrerade än.</p>
               )}
             </div>
 
             <div className='flex justify-end gap-2'>
+              {prospect.callId && (
+                <Button
+                  variant='outline'
+                  onClick={() => {
+                    onClose();
+                    router.push(`/dashboard/chat?callId=${prospect.callId}`);
+                  }}
+                >
+                  <Icons.chat className='mr-2 h-4 w-4' /> Gå till samtalshistorik
+                </Button>
+              )}
               <Button variant='outline' onClick={onClose}>
                 <Icons.close className='mr-2 h-4 w-4' /> Stäng
               </Button>

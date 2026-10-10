@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
 
 // MOCK — samtalshistorik förhandsvisning. Wiring pass: swap for
 // useQuery(campaignCallOptions(...)) + /api/calls — the ?callId=[ID] deep
@@ -156,9 +157,21 @@ const TYPE_FILTERS: { value: CallType | 'alla'; label: string }[] = [
  * org.nummer, call-id, sammanfattning) + detail (summary + transcript).
  */
 export function CallHistoryView() {
+  const searchParams = useSearchParams();
+  const deepLinkCallId = searchParams.get('callId');
   const [search, setSearch] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState<CallType | 'alla'>('alla');
   const [selectedId, setSelectedId] = React.useState(MOCK_CALLS[0]?.id ?? '');
+
+  // ?callId=[ID] djuplänk — förvälj samtalet + byt till dess typflik.
+  React.useEffect(() => {
+    if (!deepLinkCallId) return;
+    const call = MOCK_CALLS.find((c) => c.callId === deepLinkCallId);
+    if (call) {
+      setSelectedId(call.id);
+      setTypeFilter(call.callType);
+    }
+  }, [deepLinkCallId]);
 
   const filtered = MOCK_CALLS.filter(
     (call) =>
@@ -261,7 +274,7 @@ export function CallHistoryView() {
                   {CALL_TYPE_META[selected.callType].label}
                 </Badge>
                 <p className='text-muted-foreground mt-1 text-[10px] font-mono'>
-                  call-id: {selected.callId}
+                  Samtalsid: {selected.callId}
                 </p>
               </div>
             </div>

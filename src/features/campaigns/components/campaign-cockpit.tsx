@@ -124,7 +124,7 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
                   {active && <Badge>Aktuell</Badge>}
                 </div>
                 <CardDescription>{state.description}</CardDescription>
-                {!active && (
+                {!active && !(state.key === 'pausad' && campaign.status === 'köad') && (
                   <Button
                     size='sm'
                     variant={state.key === 'live' ? 'default' : 'outline'}
