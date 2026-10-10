@@ -58,9 +58,9 @@ export function AssistWorkspace() {
       });
       session.joinCall(uvSessionToken);
       sessionRef.current = session;
-    } catch (err) {
+    } catch {
       setState('error');
-      setStatusLabel(err instanceof Error ? err.message : 'Okänt fel.');
+      setStatusLabel('Kunde inte koppla upp sessionen — försök igen.');
     }
   }, []);
 
@@ -70,9 +70,7 @@ export function AssistWorkspace() {
   return (
     <div className='flex min-h-[calc(100dvh-14rem)] flex-col items-center justify-center gap-10 px-4 py-10 md:min-h-[calc(100dvh-16rem)]'>
       <div className='text-center'>
-        <h2 className='text-2xl font-semibold tracking-tight md:text-3xl'>
-          Ring AI-Assistent
-        </h2>
+        <h2 className='text-2xl font-semibold tracking-tight md:text-3xl'>Ring AI-Assistent</h2>
         <p className='text-muted-foreground mx-auto mt-3 max-w-md text-sm md:text-base'>
           {isLive
             ? 'Samtalet är igång — tala fritt.'
@@ -109,10 +107,7 @@ export function AssistWorkspace() {
       </div>
 
       {statusLabel && (
-        <Badge
-          variant={state === 'error' ? 'destructive' : 'secondary'}
-          className='capitalize'
-        >
+        <Badge variant={state === 'error' ? 'destructive' : 'secondary'} className='capitalize'>
           {state === 'error' ? statusLabel : `Status: ${statusLabel}`}
         </Badge>
       )}

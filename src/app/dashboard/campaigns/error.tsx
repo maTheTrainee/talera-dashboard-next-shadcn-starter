@@ -1,32 +1,17 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Icons } from '@/components/icons';
 
-export default function CampaignsError({
-  reset
-}: {
-  error: Error;
-  reset: () => void;
-}) {
+export default function CampaignsError({ reset }: { error: Error; reset: () => void }) {
   return (
     <Card className='mx-auto max-w-lg'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2'>
           <Icons.warning className='h-5 w-5' /> Kampanjer kunde inte laddas
         </CardTitle>
-        <CardDescription>
-          Databasen svarar inte just nu
-          {process.env.NODE_ENV !== 'production' && ' (kallare-server:8090)'}
-          {' '}— försök igen om en stund.
-        </CardDescription>
+        <CardDescription>Databasen svarar inte just nu — försök igen om en stund.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button onClick={reset}>

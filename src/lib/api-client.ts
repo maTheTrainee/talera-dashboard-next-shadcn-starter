@@ -1,4 +1,11 @@
 const BASE_URL = '/api';
+// SSR-säker fetch: relativa URL:er kraschar i Node (Next server-renderar
+// klientkomponenter), så serverkontexten behöver en absolut bas.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? '';
+
+function buildUrl(endpoint: string): string {
+  return APP_URL ? `${APP_URL}${BASE_URL}${endpoint}` : `${BASE_URL}${endpoint}`;
+}
 
 /** Error with the API's user-facing Swedish message (from the JSON body). */
 export class ApiError extends Error {
@@ -12,7 +19,7 @@ export class ApiError extends Error {
 }
 
 export async function apiClient<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+  const res = await fetch(buildUrl(endpoint), {
     headers: { 'Content-Type': 'application/json' },
     ...options
   });

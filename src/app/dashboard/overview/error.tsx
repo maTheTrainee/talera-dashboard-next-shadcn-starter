@@ -25,21 +25,21 @@ export default function OverviewError({ error, reset }: { error: Error; reset: (
 
   return (
     <StatsErrorAlert
-      message={`Failed to load statistics: ${error.message}`}
+      message={'Statistiken kunde inte laddas.'}
       action={
         <>
           <Button variant='outline' size='sm' onClick={retry} disabled={isPending}>
             {isPending ? (
               <>
                 <Icons.spinner className='mr-2 h-4 w-4 animate-spin' aria-hidden='true' />
-                Retrying...
+                Försöker…
               </>
             ) : (
-              'Try again'
+              'Försök igen'
             )}
           </Button>
           <span role='status' aria-live='polite' className='sr-only'>
-            {isPending ? 'Retrying' : ''}
+            {isPending ? 'Försöker' : ''}
           </span>
         </>
       }

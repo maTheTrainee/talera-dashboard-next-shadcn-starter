@@ -62,7 +62,7 @@ export function CampaignProspectsDialog({ campaign, onClose }: CampaignProspects
     setSearch('');
   }, [campaign?.id]);
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     ...campaignProspectsOptions(campaign?.id ?? '', {
       page,
       limit: PAGE_SIZE,
@@ -126,6 +126,14 @@ export function CampaignProspectsDialog({ campaign, onClose }: CampaignProspects
               {[0, 1, 2, 3].map((i) => (
                 <div key={i} className='bg-muted h-12 animate-pulse rounded-lg' />
               ))}
+            </div>
+          ) : isError ? (
+            <div className='flex flex-col items-center justify-center py-14'>
+              <Icons.warning className='text-destructive/60 mb-2 h-8 w-8' />
+              <p className='text-destructive text-sm font-medium'>Kunde inte hämta prospekterna.</p>
+              <Button variant='outline' size='sm' className='mt-3' onClick={() => void refetch()}>
+                <Icons.refresh className='mr-1 h-3.5 w-3.5' /> Försök igen
+              </Button>
             </div>
           ) : !data || data.items.length === 0 ? (
             <div className='flex flex-col items-center justify-center py-14'>
