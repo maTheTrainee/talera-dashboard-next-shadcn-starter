@@ -12,16 +12,13 @@ export class ApiError extends Error {
 }
 
 export async function apiClient<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  // SSR-skip: apiClient körs ENDAST i webbläsaren. Next server-renderar
+  // BFF-vakt: apiClient körs ENDAST i webbläsaren. Next server-renderar
   // klientkomponenter, men queryFn:s under SSR har ingen Clerk-session
-  // (401 "Unauthorized" → hela sidan kastades till klientrendering med
-  // felgräns). Ett aldrig-lösande promise håller Suspense-gränsen pågående
-  // under SSR (skelettet streamas), och klienten gör själva hämtningen med
-  // sessionens cookies — BFF-mönstret (cookies går inte att vidarebefordra
-  // server-side). Relativa URL:er räcker då: alltid same-origin, cookies
-  // skickas alltid, oavsett vilken host som surfas från.
+  // (401 → hela sidan kastades till klientrendering med felgräns). useQuery
+  // körs aldrig under SSR, så den här vaken är ren dokumentation + säkerhet —
+  // och failar SNABBT om någon väg ändå hamnar här (häng inte tiotals sekunder).
   if (typeof window === 'undefined') {
-    return new Promise<T>(() => {});
+    throw new ApiError(500, 'apiClient körs endast i webbläsaren.');
   }
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {

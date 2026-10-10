@@ -4,7 +4,7 @@ import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableToolbar } from '@/components/ui/table/data-table-toolbar';
 import { useDataTable } from '@/hooks/use-data-table';
 import { Button } from '@/components/ui/button';
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { parseAsArrayOf, parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import * as React from 'react';
 import { getSortingStateParser } from '@/lib/parsers';
@@ -46,12 +46,14 @@ export function ContactsTable() {
     ...(params.sort.length > 0 && { sort: JSON.stringify(params.sort) })
   };
 
-  const { data } = useSuspenseQuery(contactsQueryOptions(filters));
+  // useQuery (inte useSuspenseQuery): SSR-fetch kan aldrig bära Clerk-
+  // sessionen — den körs endast i klienten, servern skelettar direkt.
+  const { data, isPending } = useQuery(contactsQueryOptions(filters));
 
-  const pageCount = Math.ceil(data.total_items / params.perPage);
+  const pageCount = data ? Math.ceil(data.total_items / params.perPage) : 0;
 
   const { table } = useDataTable({
-    data: data.items,
+    data: data?.items ?? [],
     columns,
     pageCount,
     shallow: true,
@@ -66,6 +68,8 @@ export function ContactsTable() {
 
   const [linkOpen, setLinkOpen] = React.useState(false);
   const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+  if (isPending || !data) return <ContactsTableSkeleton />;
 
   return (
     <DataTable table={table}>

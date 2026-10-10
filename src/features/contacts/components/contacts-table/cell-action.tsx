@@ -50,7 +50,7 @@ export function CellAction({ data }: CellActionProps) {
           <span className='sr-only'>Öppna meny</span>
           <Icons.ellipsis className='h-4 w-4' />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align='end'>
+        <DropdownMenuContent align='end' className='w-52'>
           <DropdownMenuGroup>
             <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
           </DropdownMenuGroup>

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +41,9 @@ interface CampaignCockpitProps {
  * integrated Chat Transcript popup modal, all synced with the main collections.
  */
 export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
-  const { data: campaign } = useSuspenseQuery(campaignDetailOptions(campaignId));
+  // useQuery (inte useSuspenseQuery): SSR-fetch kan aldrig bära Clerk-
+  // sessionen — den körs endast i klienten, servern skelettar direkt.
+  const { data: campaign, isPending } = useQuery(campaignDetailOptions(campaignId));
   const [transcriptCallId, setTranscriptCallId] = React.useState<string | null>(null);
 
   const statusMutation = useMutation({
@@ -56,6 +58,8 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
     { key: 'live', label: 'Live', description: 'Samtalen körs enligt schema.' },
     { key: 'pausad', label: 'Pausad', description: 'Pausad — återuppta när som helst.' }
   ];
+
+  if (isPending || !campaign) return <CampaignCockpitSkeleton />;
 
   return (
     <div className='space-y-4'>
