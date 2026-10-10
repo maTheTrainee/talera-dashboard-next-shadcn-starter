@@ -48,6 +48,14 @@ import {
 } from '@/components/ui/select';
 import { SchedulingControls, toIsoDateTime, type SchedulingValue } from './scheduling-controls';
 
+// Konfliktvalen (Granska & koppla) — items-mappning så att triggern visar
+// den svenska etiketten istället för råa värden ("link"/"create"/"skip").
+const CONFLICT_CHOICES: { value: 'link' | 'create' | 'skip'; label: string }[] = [
+  { value: 'link', label: 'Koppla befintlig kontakt' },
+  { value: 'create', label: 'Skapa ny ändå' },
+  { value: 'skip', label: 'Hoppa över' }
+];
+
 // --- Step schemas (picked from the base object; the strict 4-hour scheduling
 // window is validated immediately at step 2, and re-validated against the full
 // schema at final submit) ---
@@ -557,6 +565,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                                   </Badge>
                                 ) : existingId ? (
                                   <Select
+                                    items={CONFLICT_CHOICES}
                                     value={choice ?? 'link'}
                                     onValueChange={(v) =>
                                       setChoices((prev) => ({
@@ -569,9 +578,11 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value='link'>Koppla befintlig kontakt</SelectItem>
-                                      <SelectItem value='create'>Skapa ny ändå</SelectItem>
-                                      <SelectItem value='skip'>Hoppa över</SelectItem>
+                                      {CONFLICT_CHOICES.map((c) => (
+                                        <SelectItem key={c.value} value={c.value}>
+                                          {c.label}
+                                        </SelectItem>
+                                      ))}
                                     </SelectContent>
                                   </Select>
                                 ) : (

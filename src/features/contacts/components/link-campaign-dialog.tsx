@@ -198,6 +198,7 @@ export function LinkCampaignDialog({ open, contacts, onClose }: LinkCampaignDial
           <div className='space-y-1.5'>
             <Label>Välj kampanj</Label>
             <Select
+              items={campaignOptions.map((c) => ({ value: c.id, label: c.name }))}
               value={campaignId ?? undefined}
               onValueChange={(v) => {
                 if (v) setCampaignId(v);
