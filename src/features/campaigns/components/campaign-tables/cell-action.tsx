@@ -50,47 +50,81 @@ export function CellAction({ data }: CellActionProps) {
         campaign={deleteOpen ? data : null}
         onClose={() => setDeleteOpen(false)}
       />
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
-          <span className='sr-only'>Öppna meny</span>
-          <Icons.ellipsis className='h-4 w-4' />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align='end' className='w-52'>
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
-          </DropdownMenuGroup>
-          <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <Icons.edit className='mr-2 h-4 w-4' /> Redigera
-            </DropdownMenuItem>
-            {canStart && (
-              <DropdownMenuItem
-                onClick={() => statusMutation.mutate({ id: data.id, values: { status: 'live' } })}
-              >
-                <Icons.send className='mr-2 h-4 w-4' /> Starta (Live)
+      {/* Quick-actions — Starta/Pausa/Återuppta ett klick från listan, ingen menygömsle */}
+      <div className='flex items-center justify-end gap-1'>
+        {canStart && (
+          <Button
+            variant='outline'
+            size='sm'
+            className='h-8'
+            disabled={statusMutation.isPending}
+            title={
+              data.status === 'pausad'
+                ? 'Återuppta kampanjen (status: Live)'
+                : 'Starta kampanjen (status: Live)'
+            }
+            onClick={() => statusMutation.mutate({ id: data.id, values: { status: 'live' } })}
+          >
+            <Icons.play className='mr-1 h-3.5 w-3.5' />
+            {data.status === 'pausad' ? 'Återuppta' : 'Starta'}
+          </Button>
+        )}
+        {data.status === 'live' && (
+          <Button
+            variant='outline'
+            size='sm'
+            className='h-8'
+            disabled={statusMutation.isPending}
+            title='Pausa kampanjen'
+            onClick={() => statusMutation.mutate({ id: data.id, values: { status: 'pausad' } })}
+          >
+            <Icons.pause className='mr-1 h-3.5 w-3.5' /> Pausa
+          </Button>
+        )}
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
+            <span className='sr-only'>Öppna meny</span>
+            <Icons.ellipsis className='h-4 w-4' />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end' className='w-52'>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
+            </DropdownMenuGroup>
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                <Icons.edit className='mr-2 h-4 w-4' /> Redigera
               </DropdownMenuItem>
-            )}
-            {data.status === 'live' && (
-              <DropdownMenuItem
-                onClick={() => statusMutation.mutate({ id: data.id, values: { status: 'pausad' } })}
-              >
-                Pausa
+              {canStart && (
+                <DropdownMenuItem
+                  onClick={() => statusMutation.mutate({ id: data.id, values: { status: 'live' } })}
+                >
+                  <Icons.send className='mr-2 h-4 w-4' /> Starta (Live)
+                </DropdownMenuItem>
+              )}
+              {data.status === 'live' && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    statusMutation.mutate({ id: data.id, values: { status: 'pausad' } })
+                  }
+                >
+                  Pausa
+                </DropdownMenuItem>
+              )}
+              {data.status === 'avslutad' && (
+                <DropdownMenuItem onClick={() => setResumeOpen(true)}>
+                  <Icons.clock className='mr-2 h-4 w-4' /> Återuppta
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
+                <Icons.trash className='mr-2 h-4 w-4' /> Radera
               </DropdownMenuItem>
-            )}
-            {data.status === 'avslutad' && (
-              <DropdownMenuItem onClick={() => setResumeOpen(true)}>
-                <Icons.clock className='mr-2 h-4 w-4' /> Återuppta
+              <DropdownMenuItem onClick={() => router.push(`/dashboard/campaigns/${data.id}`)}>
+                <Icons.externalLink className='mr-2 h-4 w-4' /> Öppna Kampanjdetaljer
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-              <Icons.trash className='mr-2 h-4 w-4' /> Radera
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push(`/dashboard/campaigns/${data.id}`)}>
-              <Icons.externalLink className='mr-2 h-4 w-4' /> Öppna Kampanjdetaljer
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </>
   );
 }

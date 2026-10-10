@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,8 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DataTable } from '@/components/ui/table/data-table';
-import { useDataTable } from '@/hooks/use-data-table';
+import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
 import { cn } from '@/lib/utils';
 import { Icons } from '@/components/icons';
 import {
@@ -91,10 +89,20 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
         </span>
       </div>
 
-      {/* Master campaign states — click a card to transition the campaign */}
+      {/* Master campaign states — klicka kortet ELLER knappen för att byta status */}
       <div className='grid gap-4 md:grid-cols-3'>
         {states.map((state) => {
           const active = campaign.status === state.key;
+          // Handlingsetiketten beror på nuvarande status: från köad heter
+          // Live-kortets knapp "Starta", från pausad "Återuppta".
+          const actionLabel =
+            state.key === 'live'
+              ? campaign.status === 'pausad'
+                ? 'Återuppta'
+                : 'Starta'
+              : state.key === 'pausad'
+                ? 'Pausa'
+                : 'Sätt i kö';
           return (
             <Card
               key={state.key}
@@ -116,6 +124,22 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
                   {active && <Badge>Aktuell</Badge>}
                 </div>
                 <CardDescription>{state.description}</CardDescription>
+                {!active && (
+                  <Button
+                    size='sm'
+                    variant={state.key === 'live' ? 'default' : 'outline'}
+                    disabled={statusMutation.isPending}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      statusMutation.mutate({
+                        id: campaign.id,
+                        values: { status: state.key as Campaign['status'] }
+                      });
+                    }}
+                  >
+                    {statusMutation.isPending ? 'Sparar…' : actionLabel}
+                  </Button>
+                )}
               </CardHeader>
             </Card>
           );
@@ -169,124 +193,6 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
   );
 }
 
-// --- Relational prospects grid ---
-
-function getProspectColumns(
-  campaign: Campaign,
-  onOpenTranscript: (callId: string) => void
-): ColumnDef<CampaignProspect>[] {
-  return [
-    {
-      id: 'name',
-      accessorFn: (row) => `${row.first_name} ${row.last_name}`,
-      header: 'Kontakt',
-      cell: ({ row }) => (
-        <div className='flex flex-col'>
-          <span className='font-medium'>
-            {row.original.first_name} {row.original.last_name}
-          </span>
-          <span className='text-muted-foreground text-xs'>
-            {row.original.company ?? ''}
-            {row.original.org_number ? ` · ${row.original.org_number}` : ''}
-          </span>
-          {row.original.company && (
-            <span className='text-muted-foreground text-xs'>{row.original.email}</span>
-          )}
-        </div>
-      ),
-      meta: {
-        label: 'Kontakt'
-      }
-    },
-    {
-      id: 'phone',
-      accessorKey: 'phone',
-      header: 'Telefon',
-      cell: ({ row }) => (
-        <a
-          href={`tel:${row.original.phone}`}
-          className='text-sm underline-offset-4 hover:underline'
-        >
-          {row.original.phone}
-        </a>
-      ),
-      meta: {
-        label: 'Telefon'
-      }
-    },
-    {
-      id: 'status',
-      accessorKey: 'status',
-      header: 'Ringstatus',
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return (
-          <div className='flex flex-col'>
-            <Badge variant='outline' className='w-fit capitalize'>
-              {status.replace('_', ' ')}
-            </Badge>
-            {status === 'uppföljning' && row.original.follow_up_at && (
-              <span className='text-muted-foreground text-xs'>
-                {new Date(row.original.follow_up_at).toLocaleString('sv-SE', {
-                  dateStyle: 'short',
-                  timeStyle: 'short'
-                })}
-              </span>
-            )}
-          </div>
-        );
-      },
-      meta: {
-        label: 'Ringstatus'
-      }
-    },
-    {
-      id: 'contact_attempts',
-      accessorKey: 'contact_attempts',
-      header: 'Kontaktförsök',
-      cell: ({ row }) => {
-        const attempts = row.original.contact_attempts ?? 0;
-        const max = campaign.max_attempts ?? 0;
-        return (
-          <span className='text-muted-foreground text-sm'>
-            {max > 0 ? `${attempts}/${max}` : attempts}
-          </span>
-        );
-      },
-      meta: {
-        label: 'Kontaktförsök'
-      }
-    },
-    {
-      id: 'call_summary',
-      accessorKey: 'call_summary',
-      header: 'Sammanfattning',
-      cell: ({ cell }) => (
-        <span className='text-muted-foreground line-clamp-2 block max-w-[220px] text-sm'>
-          {cell.getValue<CampaignProspect['call_summary']>() ?? '—'}
-        </span>
-      ),
-      meta: {
-        label: 'Sammanfattning'
-      }
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => (
-        <Button
-          variant='ghost'
-          size='sm'
-          disabled={!row.original.call_id}
-          onClick={() => row.original.call_id && onOpenTranscript(row.original.call_id)}
-        >
-          <Icons.chat className='mr-2 h-4 w-4' /> Visa samtal
-        </Button>
-      )
-    }
-  ];
-}
-
 function ProspectsGrid({
   campaign,
   onOpenTranscript
@@ -294,8 +200,21 @@ function ProspectsGrid({
   campaign: Campaign;
   onOpenTranscript: (callId: string) => void;
 }) {
+  const [page, setPage] = React.useState(1);
+  // searchInput = fältets live-värde (skrivs direkt), search = den
+  // debouncade frågevärdet som faktiskt hämtar.
+  const [searchInput, setSearchInput] = React.useState('');
   const [search, setSearch] = React.useState('');
-  const filters = { limit: 25, ...(search && { search }) };
+  const debouncedSetSearch = useDebouncedCallback((value: string) => {
+    setPage(1);
+    setSearch(value);
+  }, 400);
+
+  const filters = {
+    page,
+    limit: PAGE_SIZE,
+    ...(search && { search: search })
+  };
 
   const { data, isPending, isError, refetch } = useQuery({
     ...campaignProspectsOptions(campaign.id, filters),
@@ -305,46 +224,161 @@ function ProspectsGrid({
     refetchOnMount: 'always'
   });
 
-  const columns = React.useMemo(
-    () => getProspectColumns(campaign, onOpenTranscript),
-    [campaign, onOpenTranscript]
-  );
-
-  const { table } = useDataTable({
-    data: data?.items ?? [],
-    columns,
-    pageCount: Math.ceil((data?.total_items ?? 0) / 25),
-    shallow: true
-  });
+  const total = data?.total_items ?? 0;
+  const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, total);
 
   return (
-    <DataTable table={table}>
-      <div className='flex flex-wrap items-center gap-2 p-2'>
-        <Input
-          placeholder='Sök prospekt (namn eller nummer)...'
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className='max-w-xs'
-        />
-        <span className='text-muted-foreground text-xs'>
-          {isPending ? 'Laddar prospekter…' : `${data?.total_items ?? 0} prospekt i kampanjen`}
-        </span>
-        {isError && (
-          <Button variant='outline' size='sm' onClick={() => void refetch()}>
-            <Icons.refresh className='mr-1 h-3.5 w-3.5' /> Försök igen
-          </Button>
-        )}
-      </div>
-      {isError && (
-        <div className='bg-destructive/5 border-destructive/20 flex flex-col items-center justify-center rounded-lg border py-12'>
-          <Icons.warning className='text-destructive/60 mb-2 h-8 w-8' />
-          <p className='text-destructive text-sm font-medium'>Kunde inte hämta prospekten.</p>
-          <p className='text-muted-foreground mt-1 text-xs'>
-            Ett fel uppstod vid hämtningen — försök igen om en stund.
-          </p>
+    <Card>
+      <CardContent className='pt-6'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Input
+            placeholder='Sök prospekt (namn eller nummer)...'
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              debouncedSetSearch(e.target.value);
+            }}
+            className='max-w-xs'
+          />
+          <span className='text-muted-foreground text-xs'>
+            {isPending ? 'Laddar prospekter…' : `${total} prospekt i kampanjen`}
+          </span>
+          {isError && (
+            <Button variant='outline' size='sm' onClick={() => void refetch()}>
+              <Icons.refresh className='mr-1 h-3.5 w-3.5' /> Försök igen
+            </Button>
+          )}
         </div>
-      )}
-    </DataTable>
+
+        {isError ? (
+          <div className='bg-destructive/5 border-destructive/20 mt-3 flex flex-col items-center justify-center rounded-lg border py-12'>
+            <Icons.warning className='text-destructive/60 mb-2 h-8 w-8' />
+            <p className='text-destructive text-sm font-medium'>Kunde inte hämta prospekten.</p>
+            <p className='text-muted-foreground mt-1 text-xs'>
+              Ett fel uppstod vid hämtningen — försök igen om en stund.
+            </p>
+          </div>
+        ) : isPending ? (
+          <div className='mt-3 space-y-2'>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className='bg-muted h-12 animate-pulse rounded-lg' />
+            ))}
+          </div>
+        ) : data.items.length === 0 ? (
+          <div className='flex flex-col items-center justify-center py-12'>
+            <Icons.teams className='text-muted-foreground/40 mb-2 h-8 w-8' />
+            <p className='text-muted-foreground text-sm'>
+              {search
+                ? 'Inga prospekter matchar sökningen.'
+                : 'Inga prospekter i den här kampanjen än.'}
+            </p>
+          </div>
+        ) : (
+          <div className='mt-3 overflow-hidden rounded-lg border'>
+            <table className='w-full text-sm'>
+              <thead className='bg-muted/60'>
+                <tr className='text-muted-foreground text-left text-[11px] uppercase'>
+                  <th className='py-2.5 pr-4 pl-3 font-medium'>Kontakt</th>
+                  <th className='py-2.5 pr-4 font-medium'>Telefon</th>
+                  <th className='py-2.5 pr-4 font-medium'>Ringstatus</th>
+                  <th className='py-2.5 pr-4 font-medium'>Sammanfattning</th>
+                  <th className='py-2.5 pr-3 font-medium'>
+                    <span className='sr-only'>Åtgärder</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((prospect) => (
+                  <ProspectRow
+                    key={prospect.id}
+                    prospect={prospect}
+                    onOpenTranscript={onOpenTranscript}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {total > 0 && (
+          <div className='mt-3 flex items-center justify-between'>
+            <span className='text-muted-foreground text-xs tabular-nums'>
+              {from}–{to} av {total} prospekter
+            </span>
+            <div className='flex items-center gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={page <= 1 || isPending}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <Icons.chevronLeft className='mr-1 h-3.5 w-3.5' /> Föregående
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={to >= total || isPending}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Nästa <Icons.chevronRight className='ml-1 h-3.5 w-3.5' />
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+const PAGE_SIZE = 25;
+
+function ProspectRow({
+  prospect,
+  onOpenTranscript
+}: {
+  prospect: CampaignProspect;
+  onOpenTranscript: (callId: string) => void;
+}) {
+  return (
+    <tr className='hover:bg-muted/40 border-b last:border-0'>
+      <td className='py-2.5 pr-4 pl-3'>
+        <span className='font-medium'>
+          {prospect.first_name} {prospect.last_name}
+        </span>
+        {prospect.company && (
+          <span className='text-muted-foreground block text-xs'>{prospect.company}</span>
+        )}
+      </td>
+      <td className='text-muted-foreground py-2.5 pr-4 tabular-nums'>{prospect.phone}</td>
+      <td className='py-2.5 pr-4'>
+        <Badge
+          variant={
+            prospect.status === 'avslutat' || prospect.status === 'i_samtal'
+              ? 'default'
+              : prospect.status === 'ringer' || prospect.status === 'uppföljning'
+                ? 'secondary'
+                : 'outline'
+          }
+          className='capitalize'
+        >
+          {prospect.status.replace('_', ' ')}
+        </Badge>
+      </td>
+      <td className='text-muted-foreground line-clamp-2 max-w-[240px] py-2.5 pr-4'>
+        {prospect.call_summary ?? 'Sammanfattningen skapas efter samtalet.'}
+      </td>
+      <td className='py-2.5 pr-3 text-right'>
+        <Button
+          variant='ghost'
+          size='sm'
+          disabled={!prospect.call_id}
+          onClick={() => prospect.call_id && onOpenTranscript(prospect.call_id)}
+        >
+          <Icons.chat className='mr-2 h-4 w-4' /> Visa samtal
+        </Button>
+      </td>
+    </tr>
   );
 }
 
