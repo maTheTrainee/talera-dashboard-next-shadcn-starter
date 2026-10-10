@@ -29,11 +29,11 @@ const mockNotifications: Notification[] = [
     createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     actions: [
       {
-        id: 'view',
+        id: 'view-contact',
         label: 'Visa kontakt',
         type: 'redirect',
         style: 'primary',
-        route: '/dashboard/contacts'
+        route: '/dashboard/contacts?name=Anna%20Andersson'
       }
     ]
   },
@@ -45,11 +45,11 @@ const mockNotifications: Notification[] = [
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     actions: [
       {
-        id: 'view-product',
-        label: 'Öppna Kontakter',
+        id: 'view-contact',
+        label: 'Visa kontakt',
         type: 'redirect',
         style: 'primary',
-        route: '/dashboard/contacts'
+        route: '/dashboard/contacts?name=Erik%20Svensson'
       }
     ]
   },
@@ -61,11 +61,11 @@ const mockNotifications: Notification[] = [
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     actions: [
       {
-        id: 'billing',
-        label: 'Visa Realtidsvy',
+        id: 'view-contact',
+        label: 'Visa kontakt',
         type: 'redirect',
         style: 'primary',
-        route: '/dashboard/kanban'
+        route: '/dashboard/contacts?name=Maria%20Larsson'
       }
     ]
   },
@@ -75,13 +75,15 @@ const mockNotifications: Notification[] = [
     body: 'Kampanjen "Q1 Försäljning" har startat och ringer enligt schemat.',
     status: 'read',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    // Mock-seed — riktiga n8n-notiser ska bära kampanjens id och länka
+    // /dashboard/campaigns/{id} (Kampanjdetaljer) direkt.
     actions: [
       {
-        id: 'open',
-        label: 'Öppna Realtidsvy',
+        id: 'view-campaign',
+        label: 'Visa kampanjen',
         type: 'redirect',
         style: 'primary',
-        route: '/dashboard/kanban'
+        route: '/dashboard/campaigns'
       }
     ]
   },
@@ -93,7 +95,7 @@ const mockNotifications: Notification[] = [
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     actions: [
       {
-        id: 'open-chat',
+        id: 'view-overview',
         label: 'Visa Översikt',
         type: 'redirect',
         style: 'primary',

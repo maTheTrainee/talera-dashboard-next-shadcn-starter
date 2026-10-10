@@ -1,5 +1,6 @@
 'use client';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
 import type { Contact } from '../../api/types';
 import type { Column, ColumnDef } from '@tanstack/react-table';
@@ -15,10 +16,49 @@ export type CampaignFilterOption = { value: string; label: string };
  * Utfall/Utdata is gone — the Ringstatus badge carries the outcome state;
  * the Sammanfattning column shows the last call's n8n summary instead.
  */
-export function getColumns(
-  campaignOptions: CampaignFilterOption[]
-): ColumnDef<Contact>[] {
+export function getColumns(campaignOptions: CampaignFilterOption[]): ColumnDef<Contact>[] {
   return [
+    {
+      id: 'select',
+      header: ({
+        table
+      }: {
+        table: {
+          getIsAllPageRowsSelected: () => boolean;
+          getIsSomePageRowsSelected: () => boolean;
+          toggleAllPageRowsSelected: (v: boolean) => void;
+        };
+      }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          indeterminate={table.getIsSomePageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Markera alla rader'
+          className='translate-y-[2px]'
+        />
+      ),
+      cell: ({
+        row
+      }: {
+        row: {
+          getIsSelected: () => boolean;
+          getCanSelect: () => boolean;
+          toggleSelected: (v: boolean) => void;
+          original: Contact;
+        };
+      }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label='Markera rad'
+          title={row.original.campaign ? 'Redan i en kampanj — koppla bort den först' : undefined}
+          className='translate-y-[2px]'
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false
+    },
     {
       id: 'name',
       accessorFn: (row) => `${row.first_name} ${row.last_name}`,
@@ -56,7 +96,10 @@ export function getColumns(
         >
           {row.original.phone}
         </a>
-      )
+      ),
+      meta: {
+        label: 'Telefon'
+      }
     },
     {
       id: 'org_number',
@@ -67,10 +110,11 @@ export function getColumns(
       cell: ({ cell }) => {
         const orgNumber = cell.getValue<Contact['org_number']>();
         return (
-          <span className='text-muted-foreground text-sm tabular-nums'>
-            {orgNumber ?? '—'}
-          </span>
+          <span className='text-muted-foreground text-sm tabular-nums'>{orgNumber ?? '—'}</span>
         );
+      },
+      meta: {
+        label: 'Org.nummer'
       }
     },
     ...(campaignOptions.length > 0
@@ -82,7 +126,7 @@ export function getColumns(
             header: ({ column }: { column: Column<Contact, unknown> }) => (
               <DataTableColumnHeader column={column} title='Kampanj' />
             ),
-            cell: ({ cell }: { cell: { getValue: <T,>() => T | null } }) => {
+            cell: ({ cell }: { cell: { getValue: <T>() => T | null } }) => {
               const campaignName = cell.getValue<Contact['campaign_name']>();
               return campaignName ? (
                 <Badge variant='secondary' className='w-fit'>
@@ -134,7 +178,7 @@ export function getColumns(
       },
       enableColumnFilter: true,
       meta: {
-        label: 'status',
+        label: 'Ringstatus',
         variant: 'multiSelect' as const,
         options: PROSPECT_STATUS_OPTIONS
       }
@@ -148,6 +192,9 @@ export function getColumns(
       cell: ({ cell }) => {
         const attempts = cell.getValue<Contact['contact_attempts']>();
         return <span className='text-muted-foreground text-sm'>{attempts ?? 0}</span>;
+      },
+      meta: {
+        label: 'Kontaktförsök'
       }
     },
     {
@@ -168,6 +215,9 @@ export function getColumns(
               : '—'}
           </span>
         );
+      },
+      meta: {
+        label: 'Senast'
       }
     },
     {
@@ -183,6 +233,9 @@ export function getColumns(
             {summary ?? '—'}
           </span>
         );
+      },
+      meta: {
+        label: 'Sammanfattning'
       }
     },
     {

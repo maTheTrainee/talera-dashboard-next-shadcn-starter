@@ -30,8 +30,8 @@ const STATUS_LABELS: Record<string, string> = {
   i_samtal: 'I samtal',
   avslutat: 'Avslutat',
   ej_svar: 'Ej svar',
-  'uppföljning': 'Uppföljning',
-  'max_försök': 'Max försök'
+  uppföljning: 'Uppföljning',
+  max_försök: 'Max försök'
 };
 
 function statusVariant(status: string): 'default' | 'secondary' | 'outline' {
@@ -48,10 +48,7 @@ function statusVariant(status: string): 'default' | 'secondary' | 'outline' {
  * sidnumrering, och sidfot med djuplänk till Kontakter. Drar från det
  * tenant-isolerade /api/campaigns/[campaignId]/prospects-routet.
  */
-export function CampaignProspectsDialog({
-  campaign,
-  onClose
-}: CampaignProspectsDialogProps) {
+export function CampaignProspectsDialog({ campaign, onClose }: CampaignProspectsDialogProps) {
   const [page, setPage] = React.useState(1);
   const [search, setSearch] = React.useState('');
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -166,16 +163,12 @@ export function CampaignProspectsDialog({
                       {prospect.phone}
                     </td>
                     <td className='py-2.5 pr-4'>
-                      <Badge
-                        variant={statusVariant(prospect.status)}
-                        className='capitalize'
-                      >
+                      <Badge variant={statusVariant(prospect.status)} className='capitalize'>
                         {STATUS_LABELS[prospect.status] ?? prospect.status}
                       </Badge>
                     </td>
                     <td className='text-muted-foreground line-clamp-2 max-w-[280px] py-2.5 pr-6'>
-                      {prospect.call_summary ??
-                        'Sammanfattning genereras efter samtalet.'}
+                      {prospect.call_summary ?? 'Sammanfattning genereras efter samtalet.'}
                     </td>
                   </tr>
                 ))}
@@ -205,6 +198,19 @@ export function CampaignProspectsDialog({
               onClick={() => setPage((p) => p + 1)}
             >
               Nästa <Icons.chevronRight className='ml-1 h-3.5 w-3.5' />
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              render={
+                <a
+                  href={`/dashboard/campaigns/${campaign?.id ?? ''}`}
+                  aria-label='Öppna kampanjdetaljer'
+                />
+              }
+              nativeButton={false}
+            >
+              <Icons.externalLink className='mr-2 h-3.5 w-3.5' /> Öppna Kampanjdetaljer
             </Button>
             <Button
               variant='outline'

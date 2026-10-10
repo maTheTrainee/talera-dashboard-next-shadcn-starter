@@ -1,10 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import type {
-  Contact,
-  ContactFilters,
-  ContactMutationPayload,
-  ContactsResponse
-} from './types';
+import type { Contact, ContactFilters, ContactMutationPayload, ContactsResponse } from './types';
 
 // ============================================================
 // Contacts Service — Data Access Layer (Read/Write Highway)
@@ -56,4 +51,14 @@ export async function updateContact(
 
 export async function deleteContact(id: string): Promise<{ success: boolean }> {
   return apiClient<{ success: boolean }>(`/contacts/${id}`, { method: 'DELETE' });
+}
+
+export async function linkContactsToCampaign(
+  contactIds: string[],
+  campaignId: string
+): Promise<{ linked: number; skipped: number }> {
+  return apiClient<{ linked: number; skipped: number }>('/contacts/link-campaign', {
+    method: 'POST',
+    body: JSON.stringify({ contactIds, campaignId })
+  });
 }

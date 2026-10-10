@@ -12,14 +12,11 @@ import {
 } from '@/components/ui/dialog';
 import { apiClient } from '@/lib/api-client';
 import { getQueryClient } from '@/lib/query-client';
+import { ApiError } from '@/lib/api-client';
 import * as React from 'react';
 import { updateCampaignMutation } from '../api/mutations';
 import type { Campaign, CampaignUpdatePayload } from '../api/types';
-import {
-  SchedulingControls,
-  toIsoDateTime,
-  type SchedulingValue
-} from './scheduling-controls';
+import { SchedulingControls, toIsoDateTime, type SchedulingValue } from './scheduling-controls';
 
 interface ResumeCampaignDialogProps {
   campaign: Campaign | null;
@@ -54,7 +51,10 @@ export function ResumeCampaignDialog({ campaign, onClose }: ResumeCampaignDialog
       toast.success('Kampanjen återupptas — prospekten köas i det nya fönstret');
       onClose();
     },
-    onError: () => toast.error('Kunde inte återuppta kampanjen. Försök igen.')
+    onError: (error) =>
+      toast.error(
+        error instanceof ApiError ? error.message : 'Kunde inte återuppta kampanjen. Försök igen.'
+      )
   });
 
   return (
@@ -63,8 +63,8 @@ export function ResumeCampaignDialog({ campaign, onClose }: ResumeCampaignDialog
         <DialogHeader>
           <DialogTitle>Återuppta {campaign?.name ?? 'kampanj'}</DialogTitle>
           <DialogDescription>
-            Välj ett nytt ringfönster — kampanjen ringer kvarvarande prospekten.
-            Försöksräknaren fortsätter och max_försök-prospekt hoppar över.
+            Välj ett nytt ringfönster — kampanjen ringer kvarvarande prospekten. Försöksräknaren
+            fortsätter och max_försök-prospekt hoppar över.
           </DialogDescription>
         </DialogHeader>
 

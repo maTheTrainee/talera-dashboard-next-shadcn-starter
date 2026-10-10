@@ -1,6 +1,6 @@
 import { mutationOptions } from '@tanstack/react-query';
 import { getQueryClient } from '@/lib/query-client';
-import { createCampaign, updateCampaign } from './service';
+import { createCampaign, deleteCampaign, updateCampaign } from './service';
 import { campaignKeys } from './queries';
 import type { CampaignMutationPayload, CampaignUpdatePayload } from './types';
 
@@ -16,5 +16,14 @@ export const updateCampaignMutation = mutationOptions({
     updateCampaign(id, values),
   onSuccess: () => {
     getQueryClient().invalidateQueries({ queryKey: campaignKeys.all });
+  }
+});
+
+export const deleteCampaignMutation = mutationOptions({
+  mutationFn: (id: string) => deleteCampaign(id),
+  onSuccess: () => {
+    // Prospekterna kopplades bort — kampanjlistan OCH kontakterna uppdateras.
+    getQueryClient().invalidateQueries({ queryKey: campaignKeys.all });
+    getQueryClient().invalidateQueries({ queryKey: ['contacts'] as const });
   }
 });

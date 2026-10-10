@@ -47,10 +47,7 @@ export async function createCampaign(data: CampaignMutationPayload): Promise<Cam
   });
 }
 
-export async function updateCampaign(
-  id: string,
-  data: CampaignUpdatePayload
-): Promise<Campaign> {
+export async function updateCampaign(id: string, data: CampaignUpdatePayload): Promise<Campaign> {
   return apiClient<Campaign>(`/campaigns/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data)
@@ -68,4 +65,10 @@ export async function getCampaignProspects(
 
 export async function getCallById(callId: string): Promise<CampaignCall> {
   return apiClient<CampaignCall>(`/calls/${callId}`);
+}
+
+export async function deleteCampaign(id: string): Promise<{ unlinked: number }> {
+  return apiClient<{ unlinked: number }>(`/campaigns/${id}`, {
+    method: 'DELETE'
+  });
 }

@@ -166,7 +166,7 @@ export function CampaignFormSheet({ campaign, open, onOpenChange }: CampaignForm
                     label='Utgående nummer'
                     options={numberOptions}
                     placeholder='Använd förvalt nummer'
-                    description='Väljer du inget nummer används n8n:s förvalda fallback-nummer.'
+                    description='Väljer du inget nummer används ett förvalt nummer.'
                   />
                 )}
               />

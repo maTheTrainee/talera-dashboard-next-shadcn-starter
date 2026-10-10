@@ -6,7 +6,7 @@ import {
 } from '@/features/campaigns/components/campaign-cockpit';
 
 export const metadata = {
-  title: 'Dashboard: Kampanj-Cockpit'
+  title: 'Dashboard: Kampanjdetaljer'
 };
 
 type PageProps = {
@@ -18,8 +18,8 @@ export default async function CampaignDetailPage({ params }: PageProps) {
 
   return (
     <PageContainer
-      pageTitle='Kampanj-Cockpit'
-      pageDescription='Masterstatus, prospekt och samtalstranskript.'
+      pageTitle='Kampanjdetaljer'
+      pageDescription='Status, prospekter och samtalstranskript för kampanjen.'
     >
       <Suspense fallback={<CampaignCockpitSkeleton />}>
         <CampaignCockpit campaignId={campaignId} />

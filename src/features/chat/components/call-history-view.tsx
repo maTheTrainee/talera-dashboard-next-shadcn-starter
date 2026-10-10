@@ -30,9 +30,9 @@ interface HistoryCall {
 }
 
 const CALL_TYPE_META: Record<CallType, { label: string; className: string }> = {
-  'utgående': { label: 'Utgående', className: 'bg-blue-500/15 text-blue-600' },
-  'inkommande': { label: 'Inkommande', className: 'bg-green-500/15 text-green-700' },
-  'intern': { label: 'Intern', className: 'bg-purple-500/15 text-purple-600' }
+  utgående: { label: 'Utgående', className: 'bg-blue-500/15 text-blue-600' },
+  inkommande: { label: 'Inkommande', className: 'bg-green-500/15 text-green-700' },
+  intern: { label: 'Intern', className: 'bg-purple-500/15 text-purple-600' }
 };
 
 const MOCK_CALLS: HistoryCall[] = [
@@ -52,9 +52,15 @@ const MOCK_CALLS: HistoryCall[] = [
     transcript: [
       { speaker: 'agent', text: 'Hej Anna! Det är din AI-assistent från Talera. Har du en minut?' },
       { speaker: 'user', text: 'Ja, säg till!' },
-      { speaker: 'agent', text: 'Perfekt — vi hjälper företag att nå kunder med AI-röstsamtal. Hur ser er kundlista ut idag?' },
+      {
+        speaker: 'agent',
+        text: 'Perfekt — vi hjälper företag att nå kunder med AI-röstsamtal. Hur ser er kundlista ut idag?'
+      },
       { speaker: 'user', text: 'Vi har ungefär 400 kontakter vi vill ringa.' },
-      { speaker: 'agent', text: 'Vårt Team-paket klarar det — jag bokar in ett möte till torsdag 14:00. Fungerar det?' },
+      {
+        speaker: 'agent',
+        text: 'Vårt Team-paket klarar det — jag bokar in ett möte till torsdag 14:00. Fungerar det?'
+      },
       { speaker: 'user', text: 'Ja det fungerar fint.' },
       { speaker: 'agent', text: 'Tack Anna — mötet är bokat. Vi hörs torsdag!' }
     ]
@@ -93,7 +99,10 @@ const MOCK_CALLS: HistoryCall[] = [
       'Medarbetare frågade efter försäljningspratet för Team-paketet — AI-assistenten guida igenom manualen.',
     transcript: [
       { speaker: 'user', text: 'Vad säger jag om priset för Team-paketet?' },
-      { speaker: 'agent', text: 'Team-paketet kostar 30 900 kr per månad och inkluderar 2 röstagenter, 2 kampanjer och 2 utgående nummer.' }
+      {
+        speaker: 'agent',
+        text: 'Team-paketet kostar 30 900 kr per månad och inkluderar 2 röstagenter, 2 kampanjer och 2 utgående nummer.'
+      }
     ]
   },
   {
@@ -107,8 +116,7 @@ const MOCK_CALLS: HistoryCall[] = [
     date: 'idag 11:18',
     duration: '2 min 45 s',
     outcome: 'Kvalificerad prospekt',
-    summary:
-      'Erik kvalificerades som prospekt — stor budget, nära inköpsbeslut. Skickar offert.',
+    summary: 'Erik kvalificerades som prospekt — stor budget, nära inköpsbeslut. Skickar offert.',
     transcript: [
       { speaker: 'agent', text: 'Hej Erik! Ser att ni utvärderar röstlösningar — stämmer det?' },
       { speaker: 'user', text: 'Stämmer, vi sätter ihop kravspec just nu.' },
@@ -126,8 +134,7 @@ const MOCK_CALLS: HistoryCall[] = [
     date: 'igår 16:05',
     duration: '1 min 38 s',
     outcome: 'Uppföljning bokad',
-    summary:
-      'Maria bad oss ringa tillbaka efter klockan 15 — uppföljning bokad till 3 maj 15:30.',
+    summary: 'Maria bad oss ringa tillbaka efter klockan 15 — uppföljning bokad till 3 maj 15:30.',
     transcript: [
       { speaker: 'agent', text: 'Hej Maria! Ringer vi tillbaka vid ett bättre tillfälle?' },
       { speaker: 'user', text: 'Ja, ring gärna igen efter 15 imorgon.' },
@@ -159,8 +166,7 @@ export function CallHistoryView() {
       (call.name.toLowerCase().includes(search.toLowerCase()) ||
         call.company.toLowerCase().includes(search.toLowerCase()))
   );
-  const selected =
-    MOCK_CALLS.find((call) => call.id === selectedId) ?? filtered[0];
+  const selected = MOCK_CALLS.find((call) => call.id === selectedId) ?? filtered[0];
 
   return (
     <div className='grid min-h-0 flex-1 gap-4 lg:grid-cols-[380px_1fr]'>
@@ -190,9 +196,7 @@ export function CallHistoryView() {
         />
         <div className='flex-1 space-y-2 overflow-y-auto pr-1'>
           {filtered.length === 0 ? (
-            <p className='text-muted-foreground py-8 text-center text-xs'>
-              Inga samtal hittades
-            </p>
+            <p className='text-muted-foreground py-8 text-center text-xs'>Inga samtal hittades</p>
           ) : null}
           {filtered.map((call) => {
             const typeMeta = CALL_TYPE_META[call.callType];
@@ -204,16 +208,12 @@ export function CallHistoryView() {
                 aria-current={call.id === selected?.id ? 'true' : undefined}
                 className={cn(
                   'focus-visible:ring-ring relative flex w-full flex-col gap-1.5 rounded-xl border border-transparent p-3 text-left transition-all focus-visible:ring-2 focus-visible:outline-none',
-                  call.id === selected?.id
-                    ? 'border-primary/40 bg-primary/10'
-                    : 'hover:bg-muted/40'
+                  call.id === selected?.id ? 'border-primary/40 bg-primary/10' : 'hover:bg-muted/40'
                 )}
               >
                 <div className='flex items-start justify-between gap-2'>
                   <p className='text-sm font-semibold'>{call.name}</p>
-                  <span className='text-muted-foreground shrink-0 text-[0.65rem]'>
-                    {call.date}
-                  </span>
+                  <span className='text-muted-foreground shrink-0 text-[0.65rem]'>{call.date}</span>
                 </div>
                 <p className='text-muted-foreground text-xs'>
                   {call.company}
@@ -268,15 +268,13 @@ export function CallHistoryView() {
 
             <div className='bg-muted rounded-lg p-3'>
               <p className='text-muted-foreground mb-1 text-xs font-medium uppercase'>
-                Sammanfattning (n8n)
+                Sammanfattning
               </p>
               <p className='text-sm'>{selected.summary}</p>
             </div>
 
             <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto'>
-              <p className='text-muted-foreground text-xs font-medium uppercase'>
-                Transkript
-              </p>
+              <p className='text-muted-foreground text-xs font-medium uppercase'>Transkript</p>
               {selected.transcript.length > 0 ? (
                 selected.transcript.map((turn, index) => (
                   <div
@@ -289,9 +287,7 @@ export function CallHistoryView() {
                     <div
                       className={cn(
                         'max-w-[80%] rounded-lg px-3 py-2 text-sm',
-                        turn.speaker === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                        turn.speaker === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                       )}
                     >
                       {turn.text}

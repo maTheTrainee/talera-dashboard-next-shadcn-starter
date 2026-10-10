@@ -11,22 +11,23 @@ import * as React from 'react';
  * The PB tenant materializes on the first authenticated request after this.
  */
 function OrgBootstrap() {
-  const { isLoaded, userMemberships, createOrganization, setActive } =
-    useOrganizationList();
+  const { isLoaded, userMemberships, createOrganization, setActive } = useOrganizationList();
   const { user, isLoaded: userLoaded } = useUser();
   const [creating, setCreating] = React.useState(false);
   const attemptedRef = React.useRef(false);
 
   React.useEffect(() => {
     if (!isLoaded || !userLoaded || creating || attemptedRef.current) return;
-    const membershipCount = userMemberships?.data?.length ?? 0;
+    // Vänta tills medlemskapslistan faktiskt laddat — en oladdad (undefined)
+    // lista tolkas annars som "inga organisationer" och skapar en ny org vid
+    // varje besök (orsakade dubbletter av "Jockes organisation").
+    if (!userMemberships || userMemberships.isLoading) return;
+    const membershipCount = userMemberships.data?.length ?? 0;
     if (membershipCount > 0) return; // already has orgs — nothing to bootstrap
 
     attemptedRef.current = true;
     setCreating(true);
-    const name = user?.firstName
-      ? `${user.firstName}s organisation`
-      : 'Min organisation';
+    const name = user?.firstName ? `${user.firstName}s organisation` : 'Min organisation';
     createOrganization({ name })
       .then((org) => setActive({ organization: org.id ?? org }))
       .catch(() => {})

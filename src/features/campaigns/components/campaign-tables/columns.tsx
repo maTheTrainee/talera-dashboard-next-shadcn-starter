@@ -11,9 +11,7 @@ import { CAMPAIGN_STATUS_OPTIONS } from '../../constants/campaign-options';
  * opens the kampanjprospekt-popup. Utgående nummer is not a list column —
  * it is caller-ID config and lives in the edit sheet + cockpit.
  */
-export function getColumns(
-  onOpenProspects: (campaign: Campaign) => void
-): ColumnDef<Campaign>[] {
+export function getColumns(onOpenProspects: (campaign: Campaign) => void): ColumnDef<Campaign>[] {
   return [
     {
       id: 'name',
@@ -55,7 +53,10 @@ export function getColumns(
         >
           {cell.getValue<Campaign['prospect_count']>() ?? 0}
         </button>
-      )
+      ),
+      meta: {
+        label: 'Prospekter'
+      }
     },
     {
       id: 'status',
@@ -76,7 +77,7 @@ export function getColumns(
       },
       enableColumnFilter: true,
       meta: {
-        label: 'status',
+        label: 'Status',
         variant: 'multiSelect' as const,
         options: CAMPAIGN_STATUS_OPTIONS
       }
@@ -88,10 +89,11 @@ export function getColumns(
         <DataTableColumnHeader column={column} title='Start' />
       ),
       cell: ({ cell }) => (
-        <span className='text-sm'>
-          {new Date(cell.getValue<string>()).toLocaleString('sv-SE')}
-        </span>
-      )
+        <span className='text-sm'>{new Date(cell.getValue<string>()).toLocaleString('sv-SE')}</span>
+      ),
+      meta: {
+        label: 'Start'
+      }
     },
     {
       id: 'scheduled_end',
@@ -100,10 +102,11 @@ export function getColumns(
         <DataTableColumnHeader column={column} title='Slut' />
       ),
       cell: ({ cell }) => (
-        <span className='text-sm'>
-          {new Date(cell.getValue<string>()).toLocaleString('sv-SE')}
-        </span>
-      )
+        <span className='text-sm'>{new Date(cell.getValue<string>()).toLocaleString('sv-SE')}</span>
+      ),
+      meta: {
+        label: 'Slut'
+      }
     },
     {
       id: 'actions',

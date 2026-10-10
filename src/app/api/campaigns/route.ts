@@ -45,9 +45,7 @@ export async function GET(request: NextRequest) {
     if (status) {
       const statuses = status.split(',').filter(Boolean);
       if (statuses.length > 0) {
-        filter += ` && (${statuses
-          .map((_, i) => `status = {:status${i}}`)
-          .join(' || ')})`;
+        filter += ` && (${statuses.map((_, i) => `status = {:status${i}}`).join(' || ')})`;
         statuses.forEach((s, i) => {
           filterParams[`status${i}`] = s;
         });
@@ -134,8 +132,13 @@ export async function POST(request: NextRequest) {
     const quoteBased = outboundTiers.some((t) => t.quoteBased);
 
     if (!quoteBased) {
+      // Pakettaket gäller AKTIVA kampanjer — avslutade blockerar inte nya
+      // (README-semantik: "N Active Campaigns").
       const existing = await pb.collection('campaigns').getList(1, 1, {
-        filter: pb.filter('clerk_org_id = {:orgId}', { orgId })
+        filter: pb.filter('clerk_org_id = {:orgId} && status != {:done}', {
+          orgId,
+          done: 'avslutad'
+        })
       });
       const max = Math.max(...outboundTiers.map((t) => t.maxCampaigns ?? 0), 1);
       if (existing.totalItems >= max) {

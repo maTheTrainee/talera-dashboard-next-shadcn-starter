@@ -23,7 +23,6 @@ import { Button } from '@/components/ui/button';
 import { LoadingButton } from '@/components/ui/loading-button';
 import { Separator } from '@/components/ui/separator';
 import { CsvTemplateButton } from '@/components/csv-template-button';
-import { createCampaignMutation } from '../api/mutations';
 import { createCampaign } from '../api/service';
 import { tenantNumbersQueryOptions } from '../api/queries';
 import type { CampaignMutationPayload } from '../api/types';
@@ -33,11 +32,11 @@ import {
   campaignSchema,
   DIALING_WINDOW_START,
   DIALING_WINDOW_END,
-  MAX_SCHEDULING_WINDOW_HOURS,
   MIN_SCHEDULING_WINDOW_HOURS,
   normalizePhoneNumber
 } from '../schemas/campaign';
 import { apiClient } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-client';
 import { getQueryClient } from '@/lib/query-client';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -108,23 +107,17 @@ function ReviewSummary({
           </p>
         </div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase'>
-            Utgående nummer
-          </p>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>Utgående nummer</p>
           <p className='text-sm'>
             {values.outbound_number && values.outbound_number !== 'default'
               ? normalizePhoneNumber(values.outbound_number)
-              : 'Förvalt nummer (n8n väljer)'}
+              : 'Förvalt nummer'}
           </p>
         </div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase'>
-            Max Kontaktförsök
-          </p>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>Max Kontaktförsök</p>
           <p className='text-sm'>
-            {(values.max_attempts ?? 3) > 0
-              ? `${values.max_attempts ?? 3} försök`
-              : 'Obegränsat'}
+            {(values.max_attempts ?? 3) > 0 ? `${values.max_attempts ?? 3} försök` : 'Obegränsat'}
           </p>
         </div>
         <div>
@@ -183,15 +176,16 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
   // CSV-granskning: parsade rader + telefonbaserade konflikter + radval.
   const [csvRows, setCsvRows] = React.useState<CsvRow[]>([]);
   const [conflicts, setConflicts] = React.useState<Record<string, string>>({});
-  const [choices, setChoices] = React.useState<
-    Record<string, 'link' | 'create' | 'skip'>
-  >({});
+  const [choices, setChoices] = React.useState<Record<string, 'link' | 'create' | 'skip'>>({});
   const [warnOpen, setWarnOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   const createMutation = useMutation({
     mutationFn: (data: CampaignMutationPayload) => createCampaign(data),
-    onError: () => toast.error('Kunde inte skapa kampanjen. Försök igen.')
+    onError: (error) =>
+      toast.error(
+        error instanceof ApiError ? error.message : 'Kunde inte skapa kampanjen. Försök igen.'
+      )
   });
 
   interface ImportResult {
@@ -234,7 +228,10 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
       setConfirmOpen(false);
       onDone();
     },
-    onError: () => toast.error('Importen kunde inte göras. Försök igen.')
+    onError: (error) =>
+      toast.error(
+        error instanceof ApiError ? error.message : 'Importen kunde inte göras. Försök igen.'
+      )
   });
 
   const form = useAppForm({
@@ -282,14 +279,8 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
 
   // Schemaläggningens tillstånd → formulärets ISO-värden.
   React.useEffect(() => {
-    form.setFieldValue(
-      'scheduled_start',
-      toIsoDateTime(scheduling.date, scheduling.start)
-    );
-    form.setFieldValue(
-      'scheduled_end',
-      toIsoDateTime(scheduling.date, scheduling.end)
-    );
+    form.setFieldValue('scheduled_start', toIsoDateTime(scheduling.date, scheduling.start));
+    form.setFieldValue('scheduled_end', toIsoDateTime(scheduling.date, scheduling.end));
   }, [scheduling, form]);
 
   const isDefault = useStore(form.store, (state) => state.isDefaultValue);
@@ -311,9 +302,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
       if (cancelled) return;
       setCsvRows(rows);
 
-      const phones = [
-        ...new Set(rows.map((r) => normalizePhoneNumber(r.phone)).filter(Boolean))
-      ];
+      const phones = [...new Set(rows.map((r) => normalizePhoneNumber(r.phone)).filter(Boolean))];
       if (phones.length === 0) return;
       try {
         const result = await apiClient<{ matches: Record<string, string> }>(
@@ -340,9 +329,9 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
 
   // Schemafönstrets längd i timmar (för varningen < 4h).
   const windowHours =
-    (Number(scheduling.end.slice(0, 2)) * 60 + Number(scheduling.end.slice(3, 5)) -
-      (Number(scheduling.start.slice(0, 2)) * 60 +
-        Number(scheduling.start.slice(3, 5)))) /
+    (Number(scheduling.end.slice(0, 2)) * 60 +
+      Number(scheduling.end.slice(3, 5)) -
+      (Number(scheduling.start.slice(0, 2)) * 60 + Number(scheduling.start.slice(3, 5)))) /
     60;
 
   // Tenant numbers — the dropdown lists the org's numbers; with none in the
@@ -370,11 +359,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
 
   const handleNext = async () => {
     // < 4 timmar → varningsdialog (rekommendationen), inte ett hårt block.
-    if (
-      currentStep === 2 &&
-      scheduling.date &&
-      windowHours < MIN_SCHEDULING_WINDOW_HOURS
-    ) {
+    if (currentStep === 2 && scheduling.date && windowHours < MIN_SCHEDULING_WINDOW_HOURS) {
       setWarnOpen(true);
       return;
     }
@@ -411,7 +396,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -15 }}
             transition={{ duration: 0.4, type: 'spring' }}
-            className='flex flex-col gap-2'
+            className='flex min-w-0 flex-col gap-2'
           >
             {currentStep === 1 && (
               <FieldGroup className='space-y-4'>
@@ -421,11 +406,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                 <form.AppField
                   name='name'
                   children={(field) => (
-                    <field.TextField
-                      label='Kampanjnamn'
-                      required
-                      placeholder='Q1 Försäljning'
-                    />
+                    <field.TextField label='Kampanjnamn' required placeholder='Q1 Försäljning' />
                   )}
                 />
 
@@ -447,10 +428,9 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
               <FieldGroup className='space-y-4'>
                 <h3 className='text-lg font-semibold'>Schemaläggning</h3>
                 <FieldDescription>
-                  Ringfönster: {DIALING_WINDOW_START}–{DIALING_WINDOW_END} ·
-                  Rekommendation min {MIN_SCHEDULING_WINDOW_HOURS} h — kampanjen
-                  avslutas vid fönstrets slut och kvarvarande prospekter kan
-                  återupptas.
+                  Ringfönster: {DIALING_WINDOW_START}–{DIALING_WINDOW_END} · Rekommendation min{' '}
+                  {MIN_SCHEDULING_WINDOW_HOURS} h — kampanjen avslutas vid fönstrets slut och
+                  kvarvarande prospekter kan återupptas.
                 </FieldDescription>
 
                 <SchedulingControls
@@ -473,8 +453,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                       <div className='bg-muted/40 rounded-lg border border-dashed p-3'>
                         <p className='text-sm font-medium'>Använd förvalt nummer</p>
                         <p className='text-muted-foreground text-xs'>
-                          Talera ringer med ett förvalt nummer — kontakta oss för
-                          att få ett eget.
+                          Talera ringer med ett förvalt nummer — kontakta oss för att få ett eget.
                         </p>
                       </div>
                     )
@@ -499,8 +478,8 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
               <FieldGroup className='space-y-4'>
                 <h3 className='text-lg font-semibold'>Prospekt-CSV</h3>
                 <FieldDescription>
-                  Ladda ner mallen, fyll i prospekten och släpp filen här. Steget är
-                  obligatoriskt — prospekten importeras när kampanjen startar.
+                  Ladda ner mallen, fyll i prospekten och släpp filen här. Steget är obligatoriskt —
+                  prospekten importeras när kampanjen startar.
                 </FieldDescription>
 
                 <div className='flex justify-start'>
@@ -523,15 +502,14 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
             )}
 
             {currentStep === 4 && (
-              <div className='space-y-4'>
+              <div className='min-w-0 space-y-4'>
                 <h3 className='text-lg font-semibold'>Granska & koppla</h3>
                 <FieldDescription>
-                  Kontrollera prospekterna — konflikter hanteras per rad innan
-                  kampanjen köas.
+                  Kontrollera prospekterna — konflikter hanteras per rad innan kampanjen köas.
                 </FieldDescription>
                 <ReviewSummary values={formValues} />
 
-                <div className='max-h-72 overflow-auto rounded-lg border'>
+                <div className='max-h-72 min-w-0 overflow-auto rounded-lg border'>
                   <table className='w-full text-sm'>
                     <thead className='bg-muted/60 sticky top-0 z-10'>
                       <tr className='text-muted-foreground text-left text-[11px] uppercase'>
@@ -571,7 +549,10 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                               </td>
                               <td className='py-2 pr-3'>
                                 {!phone ? (
-                                  <Badge variant='outline' className='bg-destructive/10 text-destructive'>
+                                  <Badge
+                                    variant='outline'
+                                    className='bg-destructive/10 text-destructive'
+                                  >
                                     Exkluderad
                                   </Badge>
                                 ) : existingId ? (
@@ -584,13 +565,11 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                                       }))
                                     }
                                   >
-                                    <SelectTrigger className='h-7 w-[190px] text-xs'>
+                                    <SelectTrigger className='h-7 w-[170px] text-xs'>
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value='link'>
-                                        Koppla befintlig kontakt
-                                      </SelectItem>
+                                      <SelectItem value='link'>Koppla befintlig kontakt</SelectItem>
                                       <SelectItem value='create'>Skapa ny ändå</SelectItem>
                                       <SelectItem value='skip'>Hoppa över</SelectItem>
                                     </SelectContent>
@@ -608,9 +587,21 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
                 </div>
 
                 <p className='text-muted-foreground text-xs'>
-                  {csvRows.filter((r) => normalizePhoneNumber(r.phone) && !conflicts[normalizePhoneNumber(r.phone)]).length} nya ·{' '}
-                  {csvRows.filter((r) => normalizePhoneNumber(r.phone) && conflicts[normalizePhoneNumber(r.phone)]).length} befintliga ·{' '}
-                  {csvRows.filter((r) => !normalizePhoneNumber(r.phone)).length} ogiltiga
+                  {
+                    csvRows.filter(
+                      (r) =>
+                        normalizePhoneNumber(r.phone) && !conflicts[normalizePhoneNumber(r.phone)]
+                    ).length
+                  }{' '}
+                  nya ·{' '}
+                  {
+                    csvRows.filter(
+                      (r) =>
+                        normalizePhoneNumber(r.phone) && conflicts[normalizePhoneNumber(r.phone)]
+                    ).length
+                  }{' '}
+                  befintliga · {csvRows.filter((r) => !normalizePhoneNumber(r.phone)).length}{' '}
+                  ogiltiga
                 </p>
               </div>
             )}
@@ -668,10 +659,9 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
             <DialogHeader>
               <DialogTitle>Kort schemafönster</DialogTitle>
               <DialogDescription>
-                Fönstret är {windowHours.toFixed(1).replace('.0', '')} timmar — det
-                är inte garanterat att kampanjen hinner ringa alla nummer. Vår
-                rekommendation är alltid minst {MIN_SCHEDULING_WINDOW_HOURS} timmar
-                per kampanj.
+                Fönstret är {windowHours.toFixed(1).replace('.0', '')} timmar — det är inte
+                garanterat att kampanjen hinner ringa alla nummer. Vår rekommendation är alltid
+                minst {MIN_SCHEDULING_WINDOW_HOURS} timmar per kampanj.
               </DialogDescription>
             </DialogHeader>
             <div className='flex justify-end gap-2'>
@@ -696,8 +686,7 @@ export function CampaignWizard({ onDone }: { onDone: () => void }) {
             <DialogHeader>
               <DialogTitle>Spara endast kontakter?</DialogTitle>
               <DialogDescription>
-                Kampanjen skapas inte — kontakterna sparas bara i Kontakter.
-                Är du säker?
+                Kampanjen skapas inte — kontakterna sparas bara i Kontakter. Är du säker?
               </DialogDescription>
             </DialogHeader>
             <div className='flex justify-end gap-2'>
@@ -727,12 +716,10 @@ export function CampaignWizardTrigger() {
         <Icons.add className='mr-2 h-4 w-4' /> Ny kampanj
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className='max-w-2xl'>
+        <DialogContent className='sm:max-w-2xl md:max-w-3xl lg:max-w-4xl'>
           <DialogHeader>
             <DialogTitle>Kampanjguiden</DialogTitle>
-            <DialogDescription>
-              Konfigurera den utgående kampanjen steg för steg.
-            </DialogDescription>
+            <DialogDescription>Konfigurera den utgående kampanjen steg för steg.</DialogDescription>
           </DialogHeader>
           <CampaignWizard onDone={() => setOpen(false)} />
         </DialogContent>

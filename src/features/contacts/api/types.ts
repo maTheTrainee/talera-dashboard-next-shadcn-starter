@@ -4,7 +4,8 @@ export interface Contact {
   clerk_org_id: string;
   /** Clerk-användarens id — vem som skapade kontakten (audit). */
   created_by: string | null;
-  campaign_id: string | null;
+  /** Kampanjrelationen (PB-fältnamnet `campaign`) — en kontakt ligger i max en kampanj. */
+  campaign: string | null;
   /** Kampanjens namn — expanderas server-side av /api/contacts (relation). */
   campaign_name?: string | null;
   /** Engine call id (uv) written back by n8n after each completed call. */

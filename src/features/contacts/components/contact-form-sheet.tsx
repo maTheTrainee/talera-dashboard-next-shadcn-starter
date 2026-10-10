@@ -19,11 +19,8 @@ import { useMutation } from '@tanstack/react-query';
 import { createContactMutation, updateContactMutation } from '../api/mutations';
 import type { Contact } from '../api/types';
 import { toast } from 'sonner';
-import {
-  contactSchema,
-  normalizeProspectPhone,
-  type ContactFormValues
-} from '../schemas/contact';
+import { ApiError } from '@/lib/api-client';
+import { contactSchema, normalizeProspectPhone, type ContactFormValues } from '../schemas/contact';
 import { PROSPECT_STATUS_OPTIONS } from './contacts-table/options';
 
 interface ContactFormSheetProps {
@@ -42,7 +39,10 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
       onOpenChange(false);
       form.reset();
     },
-    onError: () => toast.error('Kunde inte skapa kontakten. Försök igen.')
+    onError: (error) =>
+      toast.error(
+        error instanceof ApiError ? error.message : 'Kunde inte skapa kontakten. Försök igen.'
+      )
   });
 
   const updateMutation = useMutation({
@@ -51,7 +51,10 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
       toast.success('Kontakten uppdaterad');
       onOpenChange(false);
     },
-    onError: () => toast.error('Kunde inte uppdatera kontakten. Försök igen.')
+    onError: (error) =>
+      toast.error(
+        error instanceof ApiError ? error.message : 'Kunde inte uppdatera kontakten. Försök igen.'
+      )
   });
 
   const form = useAppForm({
@@ -125,29 +128,20 @@ export function ContactFormSheet({ contact, open, onOpenChange }: ContactFormShe
 
               <form.AppField
                 name='company'
-                children={(field) => (
-                  <field.TextField label='Företag' placeholder='Acme AB' />
-                )}
+                children={(field) => <field.TextField label='Företag' placeholder='Acme AB' />}
               />
 
               <form.AppField
                 name='org_number'
                 children={(field) => (
-                  <field.TextField
-                    label='Org.nummer'
-                    placeholder='556123-4567'
-                  />
+                  <field.TextField label='Org.nummer' placeholder='556123-4567' />
                 )}
               />
 
               <form.AppField
                 name='email'
                 children={(field) => (
-                  <field.TextField
-                    label='E-post'
-                    type='email'
-                    placeholder='anna@example.com'
-                  />
+                  <field.TextField label='E-post' type='email' placeholder='anna@example.com' />
                 )}
               />
 

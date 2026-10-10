@@ -10,7 +10,7 @@ type BreadcrumbItem = {
 
 /**
  * Svenska sökvägsrubriker — kända segment översätts, okända dynamiska id:n
- * mappas via kontext (kampanj-id → Kampanj-Cockpit) och okända Clerk-profil-
+ * mappas via kontext (kampanj-id → Kampanjdetaljer) och okända Clerk-profil-
  * undervägar kapitaliseras som fallback.
  */
 const SEGMENT_TITLES: Record<string, string> = {
@@ -46,9 +46,9 @@ export function useBreadcrumbs() {
       const path = `/${segments.slice(0, index + 1).join('/')}`;
       const isKnown = segment in SEGMENT_TITLES;
 
-      // Dynamiskt id under Ringkampanjer = kampanjcockpit-sidan.
+      // Dynamiskt id under Ringkampanjer = kampanjdetaljer-sidan.
       if (!isKnown && previousArea === 'campaigns') {
-        items.push({ title: 'Kampanj-Cockpit', link: path });
+        items.push({ title: 'Kampanjdetaljer', link: path });
         previousArea = '';
         return;
       }

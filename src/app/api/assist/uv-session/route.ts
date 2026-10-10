@@ -76,7 +76,7 @@ export async function POST() {
     return NextResponse.json({ uvSessionToken: result.joinUrl });
   } catch {
     return NextResponse.json(
-      { error: 'Sessionen kunde inte etableras — automationen svarar inte.' },
+      { error: 'Sessionen kunde inte etableras — försök igen om en stund.' },
       { status: 502 }
     );
   }

@@ -6,13 +6,7 @@ import { toast } from 'sonner';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +27,7 @@ import {
   campaignProspectsOptions
 } from '../api/queries';
 import { updateCampaignMutation } from '../api/mutations';
+import { ApiError } from '@/lib/api-client';
 import type { Campaign, CampaignProspect } from '../api/types';
 
 interface CampaignCockpitProps {
@@ -52,17 +47,46 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
   const statusMutation = useMutation({
     ...updateCampaignMutation,
     onSuccess: () => toast.success('Kampanjstatus uppdaterad'),
-    onError: () => toast.error('Kunde inte uppdatera kampanjstatus')
+    onError: (error) =>
+      toast.error(error instanceof ApiError ? error.message : 'Kunde inte uppdatera kampanjstatus')
   });
 
   const states: { key: string; label: string; description: string }[] = [
     { key: 'köad', label: 'Köad', description: 'Väntar på schemalagd start.' },
-    { key: 'live', label: 'Live', description: 'Batchen körs av automationen.' },
+    { key: 'live', label: 'Live', description: 'Samtalen körs enligt schema.' },
     { key: 'pausad', label: 'Pausad', description: 'Pausad — återuppta när som helst.' }
   ];
 
   return (
     <div className='space-y-4'>
+      {/* Kampanjens identitet — namn + status + schemalagt fönster, alltid synligt */}
+      <div className='flex flex-wrap items-center gap-2'>
+        <h2 className='text-xl font-semibold tracking-tight'>{campaign.name}</h2>
+        <Badge
+          variant={
+            campaign.status === 'live'
+              ? 'default'
+              : campaign.status === 'pausad'
+                ? 'secondary'
+                : 'outline'
+          }
+          className='capitalize'
+        >
+          {campaign.status}
+        </Badge>
+        <span className='text-muted-foreground text-sm'>
+          {new Date(campaign.scheduled_start).toLocaleString('sv-SE', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+          })}{' '}
+          →{' '}
+          {new Date(campaign.scheduled_end).toLocaleString('sv-SE', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+          })}
+        </span>
+      </div>
+
       {/* Master campaign states — click a card to transition the campaign */}
       <div className='grid gap-4 md:grid-cols-3'>
         {states.map((state) => {
@@ -72,9 +96,7 @@ export function CampaignCockpit({ campaignId }: CampaignCockpitProps) {
               key={state.key}
               className={cn(
                 'transition-shadow',
-                active
-                  ? 'ring-primary shadow-md ring-2'
-                  : 'cursor-pointer hover:shadow-md'
+                active ? 'ring-primary shadow-md ring-2' : 'cursor-pointer hover:shadow-md'
               )}
               onClick={() =>
                 !active &&
@@ -167,7 +189,10 @@ function getProspectColumns(
             <span className='text-muted-foreground text-xs'>{row.original.email}</span>
           )}
         </div>
-      )
+      ),
+      meta: {
+        label: 'Kontakt'
+      }
     },
     {
       id: 'phone',
@@ -180,7 +205,10 @@ function getProspectColumns(
         >
           {row.original.phone}
         </a>
-      )
+      ),
+      meta: {
+        label: 'Telefon'
+      }
     },
     {
       id: 'status',
@@ -203,6 +231,9 @@ function getProspectColumns(
             )}
           </div>
         );
+      },
+      meta: {
+        label: 'Ringstatus'
       }
     },
     {
@@ -217,6 +248,9 @@ function getProspectColumns(
             {max > 0 ? `${attempts}/${max}` : attempts}
           </span>
         );
+      },
+      meta: {
+        label: 'Kontaktförsök'
       }
     },
     {
@@ -227,7 +261,10 @@ function getProspectColumns(
         <span className='text-muted-foreground line-clamp-2 block max-w-[220px] text-sm'>
           {cell.getValue<CampaignProspect['call_summary']>() ?? '—'}
         </span>
-      )
+      ),
+      meta: {
+        label: 'Sammanfattning'
+      }
     },
     {
       id: 'actions',
@@ -256,9 +293,12 @@ function ProspectsGrid({
   const [search, setSearch] = React.useState('');
   const filters = { limit: 25, ...(search && { search }) };
 
-  const { data } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     ...campaignProspectsOptions(campaign.id, filters),
-    placeholderData: (prev) => prev
+    placeholderData: (prev) => prev,
+    // Alltid färsk data vid landning — en stale 30s-cache får aldrig visa
+    // en tom lista när importen precis slutförts.
+    refetchOnMount: 'always'
   });
 
   const columns = React.useMemo(
@@ -275,7 +315,7 @@ function ProspectsGrid({
 
   return (
     <DataTable table={table}>
-      <div className='flex items-center gap-2 p-2'>
+      <div className='flex flex-wrap items-center gap-2 p-2'>
         <Input
           placeholder='Sök prospekt (namn eller nummer)...'
           value={search}
@@ -283,22 +323,30 @@ function ProspectsGrid({
           className='max-w-xs'
         />
         <span className='text-muted-foreground text-xs'>
-          {data?.total_items ?? 0} prospekt i kampanjen
+          {isPending ? 'Laddar prospekter…' : `${data?.total_items ?? 0} prospekt i kampanjen`}
         </span>
+        {isError && (
+          <Button variant='outline' size='sm' onClick={() => void refetch()}>
+            <Icons.refresh className='mr-1 h-3.5 w-3.5' /> Försök igen
+          </Button>
+        )}
       </div>
+      {isError && (
+        <div className='bg-destructive/5 border-destructive/20 flex flex-col items-center justify-center rounded-lg border py-12'>
+          <Icons.warning className='text-destructive/60 mb-2 h-8 w-8' />
+          <p className='text-destructive text-sm font-medium'>Kunde inte hämta prospekten.</p>
+          <p className='text-muted-foreground mt-1 text-xs'>
+            Ett fel uppstod vid hämtningen — försök igen om en stund.
+          </p>
+        </div>
+      )}
     </DataTable>
   );
 }
 
 // --- Integrated Chat Transcript popup modal ---
 
-function TranscriptModal({
-  callId,
-  onClose
-}: {
-  callId: string | null;
-  onClose: () => void;
-}) {
+function TranscriptModal({ callId, onClose }: { callId: string | null; onClose: () => void }) {
   const { data: call } = useQuery({
     ...campaignCallOptions(callId ?? ''),
     enabled: !!callId
@@ -310,7 +358,7 @@ function TranscriptModal({
         <DialogHeader>
           <DialogTitle>Samtalstranskript</DialogTitle>
           <DialogDescription>
-            {call?.summary ?? 'Sammanfattning genereras av automationen efter samtalet.'}
+            {call?.summary ?? 'Sammanfattningen skapas efter samtalet.'}
           </DialogDescription>
         </DialogHeader>
         <div className='max-h-[400px] space-y-3 overflow-auto'>
@@ -318,17 +366,12 @@ function TranscriptModal({
             call.transcript.map((turn, index) => (
               <div
                 key={index}
-                className={cn(
-                  'flex',
-                  turn.speaker === 'user' ? 'justify-end' : 'justify-start'
-                )}
+                className={cn('flex', turn.speaker === 'user' ? 'justify-end' : 'justify-start')}
               >
                 <div
                   className={cn(
                     'max-w-[80%] rounded-lg px-3 py-2 text-sm',
-                    turn.speaker === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
+                    turn.speaker === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                   )}
                 >
                   {turn.text}
@@ -337,7 +380,7 @@ function TranscriptModal({
             ))
           ) : (
             <p className='text-muted-foreground text-sm'>
-              Inga transkript ännu — automationen skriver dem efter varje samtal.
+              Inga transkript ännu — de skapas efter varje samtal.
             </p>
           )}
         </div>

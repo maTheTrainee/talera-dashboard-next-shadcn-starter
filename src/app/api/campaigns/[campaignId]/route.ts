@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireArea, requireAuthContext } from '@/lib/api-auth';
+import { requireArea, requireAuthContext, requireOrgAdmin } from '@/lib/api-auth';
 import { ensurePbOrgAuth, getTenantMetadata } from '@/lib/pb';
 import { dispatchToN8n } from '@/lib/n8n';
 import type { CampaignUpdatePayload } from '@/features/campaigns/api/types';
@@ -32,10 +32,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
     if (record.clerk_org_id !== orgId) {
       // 404 — cross-tenant id probes must not reveal that the record exists.
-      return NextResponse.json(
-        { error: 'Kampanjen hittades inte.' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Kampanjen hittades inte.' }, { status: 404 });
     }
 
     return NextResponse.json(record);
@@ -65,10 +62,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     const record = await pb.collection('campaigns').getOne(campaignId);
     if (record.clerk_org_id !== orgId) {
       // 404 — cross-tenant id probes must not reveal that the record exists.
-      return NextResponse.json(
-        { error: 'Kampanjen hittades inte.' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Kampanjen hittades inte.' }, { status: 404 });
     }
 
     const updated = await pb.collection('campaigns').update(campaignId, body);
@@ -86,5 +80,42 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json(updated);
   } catch {
     return NextResponse.json({ error: 'Kampanjen kunde inte uppdateras.' }, { status: 502 });
+  }
+}
+
+export async function DELETE(_request: NextRequest, { params }: RouteContext) {
+  const guard = await requireAuthContext();
+  if (!guard.ok) return guard.response;
+  const { orgId } = guard.ctx;
+  const { campaignId } = await params;
+
+  // Nivå 2 — kampanjradering är en admin-åtgärd.
+  if (!(await requireOrgAdmin(guard.ctx))) {
+    return NextResponse.json(
+      { error: 'Endast organisationens admin kan radera kampanjer.' },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const pb = await ensurePbOrgAuth(orgId);
+    const record = await pb.collection('campaigns').getOne(campaignId);
+    if (record.clerk_org_id !== orgId) {
+      // 404 — cross-tenant id probes must not reveal that the record exists.
+      return NextResponse.json({ error: 'Kampanjen hittades inte.' }, { status: 404 });
+    }
+
+    // Koppla bort kampanjens prospekter — kontakterna behålls i Kontakter.
+    const prospects = await pb.collection('contacts').getFullList(200, {
+      filter: pb.filter('campaign = {:cid}', { cid: campaignId })
+    });
+    for (const prospect of prospects) {
+      await pb.collection('contacts').update(prospect.id, { campaign: '' });
+    }
+
+    await pb.collection('campaigns').delete(campaignId);
+    return NextResponse.json({ unlinked: prospects.length });
+  } catch {
+    return NextResponse.json({ error: 'Kampanjen kunde inte raderas.' }, { status: 502 });
   }
 }
